@@ -17,7 +17,8 @@ export class ImageHandler extends BaseTextHandler {
     request: Request,
     apiKey?: string,
   ): Promise<Response> {
-    const requestBody: ImageGenerationRequest = await request.json();
+    // Usamos 'any' aqui para aceitar os campos customizados que você enviou no N8N/curl
+    const requestBody: any = await request.json();
 
     if (!requestBody.prompt) {
       throw new ValidationError("Prompt field is required", "prompt");
@@ -33,12 +34,23 @@ export class ImageHandler extends BaseTextHandler {
       );
     }
 
-    const requestBodyForAPI = this.apiService.buildImageRequestBody(
+    const requestBodyForAPI: any = this.apiService.buildImageRequestBody(
       requestBody.prompt,
       model,
       requestBody.n,
       requestBody.size,
     );
+
+    // INJEÇÃO DINÂMICA: Pegamos o que você mandou no JSON ou usamos webp como fallback
+    if (!requestBodyForAPI.promptObject) {
+      requestBodyForAPI.promptObject = {};
+    }
+    requestBodyForAPI.promptObject.output_format = requestBody.output_format || "webp";
+    
+    // Mapeando a compressão/qualidade (aceita os dois nomes)
+    if (requestBody.output_compression || requestBody.output_quality) {
+      requestBodyForAPI.promptObject.output_quality = requestBody.output_compression || requestBody.output_quality;
+    }
 
     const data = await this.apiService.sendImageRequest(
       requestBodyForAPI,
@@ -50,18 +62,18 @@ export class ImageHandler extends BaseTextHandler {
   }
 
   private transformToOpenAIFormat(
-    data: OneMinImageResponse,
+    data: any,
     _originalRequest: ImageGenerationRequest,
   ): ImageGenerationResponse {
-    const imageUrls = data.aiRecord?.aiRecordDetail?.resultObject;
+    const temporaryUrl = data?.aiRecord?.temporaryUrl;
 
-    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-      throw new ApiError("No image URLs found in API response", 500);
+    if (!temporaryUrl) {
+      throw new ApiError("Nenhuma URL temporaria assinada foi retornada pela API", 500);
     }
 
     return {
       created: Math.floor(Date.now() / 1000),
-      data: imageUrls.map((url: string) => ({ url })),
+      data: [{ url: temporaryUrl }],
     };
   }
 }
