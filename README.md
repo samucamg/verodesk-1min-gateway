@@ -1,211 +1,210 @@
+<div align="center">
+
 # VeroDesk 1min Gateway
 
+### Universal serverless AI gateway for the 1min.ai ecosystem
+### Gateway universal de IA, serverless, para o ecossistema 1min.ai
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/samucamg/verodesk-1min-gateway)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white)
-![GitHub package.json version](https://img.shields.io/github/package-json/v/samucamg/verodesk-1min-gateway)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-[English](#english) | [Português](#português) | [Español](#español)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![Hono](https://img.shields.io/badge/Hono-E36002?style=for-the-badge&logo=hono&logoColor=white)](https://hono.dev/)
+[![1min.ai](https://img.shields.io/badge/1min.ai-AI_Platform-6C47FF?style=for-the-badge)](https://1min.ai/)
 
-A high-performance universal API gateway for the 1min.ai ecosystem. Built with TypeScript, Hono, and Cloudflare Workers, VeroDesk provides OpenAI-compatible and Anthropic-compatible interfaces, dynamic model discovery, distributed edge controls, streaming translation, and multi-engine text-to-speech.
+[![Version](https://img.shields.io/github/package-json/v/samucamg/verodesk-1min-gateway?label=version&color=0ea5e9)](https://github.com/samucamg/verodesk-1min-gateway/releases)
+[![License](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
+[![OpenAI Compatible](https://img.shields.io/badge/OpenAI-compatible-412991?logo=openai&logoColor=white)](#-openai-compatible-api)
+[![Anthropic Compatible](https://img.shields.io/badge/Anthropic-compatible-191919)](#-anthropic-messages-api)
 
-> **Project position:** VeroDesk is an independent evolution inspired by the architectural foundations of `1min-relay-worker`. It is not presented as a fork. It preserves the proven relay, caching, token-accounting, streaming, image, and speech-to-text capabilities while extending the system with Anthropic Messages compatibility, multi-engine TTS, proxy authentication, image-output overrides, and hardened edge middleware.
+**[🇺🇸 English](#english) · [🇧🇷 Português](#portugues)**
+
+</div>
 
 ---
 
 <a id="english"></a>
-## English
+# 🇺🇸 English
 
-### Overview
+## ✨ Overview
 
-**VeroDesk 1min Gateway** is a serverless edge gateway that accepts familiar OpenAI and Anthropic request contracts and translates them to the 1min.ai API ecosystem. It allows applications, SDKs, automations, and internal services to use one controlled API surface while the worker handles provider-specific payload mapping, upstream authentication, response normalization, SSE streaming, model discovery, and usage protection.
+**VeroDesk 1min Gateway** is a serverless, edge-native API gateway that makes the 1min.ai ecosystem available through familiar OpenAI-compatible and Anthropic-compatible contracts. It centralizes upstream credentials, dynamically discovers models, translates payloads and streaming events, and exposes chat, structured responses, image generation, transcription, translation, and multi-engine text-to-speech through a single controlled endpoint.
 
-The project is suitable for OpenAI-compatible clients, Anthropic/Claude-compatible clients, n8n workflows, private frontends, server-side applications, and multi-provider AI integrations where the upstream 1min.ai credential must remain protected.
+Built with TypeScript, Hono, and Cloudflare Workers, it is suited to SDKs, n8n workflows, private frontends, backend services, and multi-provider AI applications that need to protect upstream credentials while retaining a straightforward client integration.
 
-### Why VeroDesk
+| [![OpenAI](https://img.shields.io/badge/🔌-OpenAI_compatible-412991?style=flat-square)](#-openai-compatible-api) | [![Anthropic](https://img.shields.io/badge/🧩-Anthropic_bridge-191919?style=flat-square)](#-anthropic-messages-api) | [![Security](https://img.shields.io/badge/🔐-Protected_credentials-16a34a?style=flat-square)](#-authentication-and-secrets) | [![Streaming](https://img.shields.io/badge/⚡-SSE_streaming-f59e0b?style=flat-square)](#-models-streaming-cache-and-limits) |
+|---|---|---|---|
+| Chat, Responses, images, audio, models | `POST /v1/messages` | Master proxy with `AUTH_TOKEN` | OpenAI and Anthropic events |
 
-- **OpenAI-compatible API surface:** Chat Completions, Responses, images, audio transcription, audio translation, speech generation, and model discovery.
-- **Anthropic Messages API bridge:** `POST /v1/messages` accepts Anthropic-style messages and translates requests and streaming events to the gateway pipeline.
-- **Master proxy authentication:** Clients can authenticate with a gateway token while the Worker injects the protected upstream `ONE_MIN_API_KEY`.
-- **Multi-engine TTS:** One OpenAI-style speech endpoint routes requests to OpenAI, Google, or ElevenLabs engines and maps engine-specific options.
-- **Dynamic model registry:** Models and capabilities are obtained from the upstream provider rather than hardcoded in the repository.
-- **Two-tier caching:** Isolate-memory and Cloudflare KV cache the model catalog to reduce latency and preserve a last-known-good catalog during temporary upstream failures.
-- **Distributed usage controls:** Cloudflare KV-backed sliding-window controls track request volume and weighted token consumption across edge instances.
-- **Streaming fidelity:** UTF-8-safe decoding and Server-Sent Events mapping preserve streaming behavior for OpenAI-style and Anthropic-style consumers.
-- **Image optimization controls:** Image requests can use output format and quality overrides for supported Flux-family generation flows.
-- **Edge hardening:** CORS preflight caching and security headers reduce unnecessary worker work and enforce safer browser behavior.
+## 🚀 One-click Cloudflare deploy
 
-### Endpoint Matrix
+> **Recommended installation path.** No terminal, local clone, or Wrangler installation is required. The deployment flow creates a copy of the repository in GitHub and deploys the Worker in Cloudflare.
+
+<div align="center">
+
+## [Deploy your VeroDesk instance to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/samucamg/verodesk-1min-gateway)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/samucamg/verodesk-1min-gateway)
+
+</div>
+
+### 📋 Prerequisites
+
+- A GitHub account to create the repository copy during the deployment flow.
+- A Cloudflare account with Workers and KV access.
+- A valid 1min.ai API key to use as `ONE_MIN_API_KEY`.
+
+### 🧩 Fill in the deployment form
+
+The animation below shows the one-click deployment form and its required values:
+
+![Animated Cloudflare deployment form: project name, two KV namespaces, 1min.ai key, and authentication token](https://cdn.jsdelivr.net/gh/samucamg/imagens/Ingles-Curso/2026/08/1mim-deploy-cloudflare_1787339418.gif)
+
+> 📌 **Use three distinct names.** The Worker/project name and both KV namespace names identify different Cloudflare resources, so they cannot be the same.
+
+| Field | Safe example | Purpose |
+|---|---|---|
+| **Project name** | `verodesk-1min-gateway` | Must be unique in your Cloudflare account; it is used in the Worker name and default `workers.dev` URL. |
+| **Rate-limit KV namespace** | `verodesk-rate-limit-store` | Stores distributed rate-limit state. Must differ from the project and model-cache names. |
+| **Model-cache KV namespace** | `verodesk-model-cache` | Stores the dynamic model catalog cache. Must differ from the other two names. |
+| **`ONE_MIN_API_KEY`** | Your 1min.ai API key | Protected upstream billing credential. |
+| **`AUTH_TOKEN`** | A long random secret | Private token clients use to access your gateway in master proxy mode. |
+| **`ONE_MIN_CHAT_API_URL`** | `https://api.1min.ai/api/chat-with-ai` | Keep the deployment form default unless 1min.ai documents a change. |
+
+### 🔑 Generate a secure gateway token
+
+`AUTH_TOKEN` is your gateway password, not your 1min.ai key. Store it in a password manager and never expose it to untrusted users. Use at least 16 characters, including upper-case letters, lower-case letters, and numbers.
+
+```bash
+openssl rand -base64 24 | tr -d '\n' | tr '+/' 'Aa' | cut -c1-24
+```
+
+### ✅ After deploy
+
+1. Copy the Worker URL, usually `https://PROJECT.YOUR-SUBDOMAIN.workers.dev`.
+2. Open `https://YOUR_WORKER_URL/` to check the health response.
+3. Test the dynamic catalog with `GET /v1/models`.
+4. Set your client base URL to `https://YOUR_WORKER_URL/v1`.
+
+```bash
+curl https://YOUR_WORKER_URL/v1/models \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN"
+```
+
+## 🧰 Main features
+
+- **🔌 OpenAI compatibility:** Chat Completions, Responses API, images, audio transcription, audio translation, speech generation, and model discovery.
+- **🧩 Anthropic compatibility:** `POST /v1/messages` translates Anthropic Messages API requests and SSE events.
+- **🔐 Master proxy:** `AUTH_TOKEN` lets clients access the gateway without ever receiving `ONE_MIN_API_KEY`.
+- **🔊 Multi-engine TTS:** one OpenAI-style endpoint routes requests to OpenAI, Google, or ElevenLabs engines.
+- **🧠 Dynamic models:** model IDs and available capabilities are obtained from the upstream catalog.
+- **⚡ Distributed controls:** Cloudflare KV stores a sliding-window rate limit for requests and weighted token usage.
+- **💾 Two-tier cache:** isolate memory and KV cache the model catalog for speed and upstream resilience.
+- **🌊 Streaming translation:** UTF-8-safe SSE handling for OpenAI-style and Anthropic-style consumers.
+- **🖼️ Image controls:** supported image flows accept `output_format` and `output_quality` overrides.
+- **🛡️ Edge protection:** cached CORS preflight handling and security headers for browser-facing deployments.
+
+## 🗺️ Endpoint matrix
 
 | Method | Endpoint | Compatibility | Description |
 |---|---|---|---|
-| `GET` | `/` | Gateway | Health and endpoint discovery |
+| `GET` | `/` | Gateway | Health check and endpoint discovery |
 | `GET` | `/v1/models` | OpenAI-style | Dynamic upstream model catalog |
-| `POST` | `/v1/chat/completions` | OpenAI | Chat completions, vision, and SSE streaming |
-| `POST` | `/v1/responses` | OpenAI | Responses API, structured output, and reasoning controls |
-| `POST` | `/v1/messages` | Anthropic | Anthropic Messages API translation and streaming |
-| `POST` | `/v1/images/generations` | OpenAI | Image generation with provider-aware overrides |
+| `POST` | `/v1/chat/completions` | OpenAI | Chat, vision input, and SSE streaming |
+| `POST` | `/v1/responses` | OpenAI | Structured Responses API and reasoning controls |
+| `POST` | `/v1/messages` | Anthropic | Messages API translation and streaming |
+| `POST` | `/v1/images/generations` | OpenAI | Image generation |
 | `POST` | `/v1/audio/speech` | OpenAI | Multi-engine text-to-speech |
-| `POST` | `/v1/audio/transcriptions` | OpenAI | Speech-to-text using multipart form data |
+| `POST` | `/v1/audio/transcriptions` | OpenAI | Multipart speech-to-text |
 | `POST` | `/v1/audio/translations` | OpenAI | Audio translation to English |
 
-### Authentication Modes
+## 🔐 Authentication and secrets
 
-VeroDesk supports two operational patterns. Choose one deliberately according to whether the gateway is public, private, or used by trusted server-side applications.
-
-| Mode | Client sends | Worker behavior | Recommended use |
+| Mode | Client sends | Worker behavior | Best for |
 |---|---|---|---|
-| Client-managed upstream key | A valid 1min.ai key in `Authorization: Bearer ...` | Relays the supplied credential upstream | Trusted direct clients and development |
-| Master proxy mode | The gateway `AUTH_TOKEN` in `Authorization: Bearer ...` | Validates the gateway token and injects `ONE_MIN_API_KEY` upstream | n8n, frontends, internal APIs, and cost-controlled production deployments |
+| Client-managed upstream key | 1min.ai key in `Authorization: Bearer ...` | Relays the supplied credential upstream | Development and fully trusted direct clients |
+| Master proxy | Gateway `AUTH_TOKEN` in `Authorization: Bearer ...` | Validates the token and injects `ONE_MIN_API_KEY` upstream | n8n, frontends, internal APIs, and production |
 
-In master proxy mode, the upstream key is never delivered to the browser, workflow consumer, or downstream application. Treat `ONE_MIN_API_KEY` and `AUTH_TOKEN` as secrets; do not put them in source control, examples, screenshots, or client-side JavaScript.
+In master proxy mode, keep `ONE_MIN_API_KEY` only in Cloudflare secrets. Never add it to commits, README examples, screenshots, frontend JavaScript, or URLs.
 
-### Dynamic Models and Capabilities
+### 🔄 Credential rotation
 
-`GET /v1/models` returns the active catalog discovered from the upstream API. The gateway does not depend on a static model list. Model capabilities—such as vision, code-interpreter support, web-search support, or supported modalities—are derived from upstream model metadata when available.
+If either credential is exposed: revoke or regenerate it, update the corresponding Cloudflare secret, redeploy if necessary, update authorized applications, and inspect usage and logs.
 
-The lookup follows a two-tier strategy:
+## 🧠 Models, streaming, cache, and limits
 
-1. Check the in-memory cache associated with the active Worker isolate.
-2. On a memory miss, check the `MODEL_CACHE` Cloudflare KV namespace.
-3. On a KV miss or expiration, request the catalog from 1min.ai and refresh the cache layers.
-4. When applicable, serve the last valid cached catalog to improve resilience during transient upstream instability.
+`GET /v1/models` returns the live catalog discovered from 1min.ai. Model capabilities—including vision, code-interpreter support, web search, and modalities—are derived from upstream metadata when available. Always query this endpoint before hard-coding a model identifier.
 
-The intended cache windows are 5 minutes in memory and 1 hour in Cloudflare KV. These values reduce catalog latency while keeping model information reasonably fresh.
+### 💾 Model-cache strategy
+
+1. The Worker checks memory in the active isolate.
+2. On a miss, it checks the `MODEL_CACHE` Cloudflare KV namespace.
+3. On a KV miss or expiration, it requests the catalog from 1min.ai and refreshes both layers.
+4. A previously valid catalog can be served during a transient upstream failure.
+
+The intended cache windows are approximately 5 minutes in memory and 1 hour in KV.
+
+### 🚦 Rate limiting and token accounting
+
+Cloudflare KV-backed sliding windows identify a consumer by IP and/or authorization credential, evaluate request and weighted-token counters, persist state in `RATE_LIMIT_STORE`, and return HTTP `429` when the active policy is exceeded. Token usage uses `gpt-tokenizer` where applicable, with a heuristic fallback.
+
+Configure real limits according to your upstream plan, expected traffic, and risk tolerance; README values are not a production quota policy.
+
+### 🌊 SSE streaming
+
+Set `stream: true` to receive incremental Server-Sent Events. Use `curl -N` in terminal tests so the client does not buffer the response.
+
+## 💬 OpenAI-compatible API
+
+### ✍️ Chat Completions
 
 ```bash
-curl https://YOUR_WORKER_DOMAIN/v1/models \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY"
-```
-
-### OpenAI Chat Completions
-
-`POST /v1/chat/completions` accepts standard OpenAI-style messages. It supports regular JSON responses and streaming responses, plus image input for vision-capable models.
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/chat/completions \
+curl -X POST https://YOUR_WORKER_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
   -d '{
     "model": "gpt-4o",
-    "messages": [
-      {
-        "role": "user",
-        "content": "Explain the purpose of a distributed API gateway."
-      }
-    ],
+    "messages": [{"role": "user", "content": "Explain the purpose of a distributed API gateway."}],
     "stream": false
   }'
 ```
 
-#### Vision input
+### 👁️ Vision input
 
-For a vision-capable model, send content as an array containing text and an `image_url`. The URL may be a remote URL or a supported data URL.
+For a vision-capable model, send an array containing text and `image_url` content:
 
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "gpt-4o",
-    "messages": [
-      {
-        "role": "user",
-        "content": [
-          {"type": "text", "text": "What do you see in this image?"},
-          {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}}
-        ]
-      }
+```json
+{
+  "model": "gpt-4o",
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "What do you see in this image?"},
+      {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}}
     ]
-  }'
+  }]
+}
 ```
 
-#### Streaming chat
+### 📦 Responses API and structured output
 
-Set `stream` to `true` to receive Server-Sent Events. Consumers should process events incrementally until the terminal event is received.
-
-```bash
-curl -N -X POST https://YOUR_WORKER_DOMAIN/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "gpt-4o",
-    "messages": [{"role": "user", "content": "Tell a short story about edge computing."}],
-    "stream": true
-  }'
-```
-
-### OpenAI Responses API
-
-`POST /v1/responses` supports the OpenAI Responses contract for straightforward input, conversational messages, JSON-object output, JSON Schema output, reasoning control, vision-compatible input, and streaming.
-
-#### Simple input
+`POST /v1/responses` supports simple `input`, conversational `messages`, `json_object`, JSON Schema, reasoning controls, vision-compatible input, and streaming.
 
 ```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/responses \
+curl -X POST https://YOUR_WORKER_URL/v1/responses \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
   -d '{
     "model": "gpt-4.1",
-    "input": "Write a three-sentence bedtime story about a unicorn.",
-    "reasoning_effort": "medium"
-  }'
-```
-
-#### Conversation input
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "gpt-4.1",
-    "messages": [
-      {"role": "user", "content": "Analyze the advantages and drawbacks of remote work."}
-    ],
-    "reasoning_effort": "high"
-  }'
-```
-
-#### JSON object output
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "gpt-4.1",
-    "input": "Summarize the benefits of regular exercise.",
-    "response_format": {"type": "json_object"},
-    "reasoning_effort": "high"
-  }'
-```
-
-#### JSON Schema output
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "gpt-4.1",
-    "input": "Create a user profile for John Doe, age 30, software engineer.",
+    "input": "Create a compact profile for a software engineer.",
     "response_format": {
       "type": "json_schema",
       "json_schema": {
         "name": "user_profile",
-        "description": "A user profile object",
         "schema": {
           "type": "object",
-          "properties": {
-            "name": {"type": "string"},
-            "age": {"type": "number"},
-            "profession": {"type": "string"},
-            "skills": {"type": "array", "items": {"type": "string"}},
-            "experience_years": {"type": "number"}
-          },
-          "required": ["name", "age", "profession"]
+          "properties": {"name": {"type": "string"}, "skills": {"type": "array", "items": {"type": "string"}}},
+          "required": ["name"]
         }
       }
     },
@@ -213,42 +212,14 @@ curl -X POST https://YOUR_WORKER_DOMAIN/v1/responses \
   }'
 ```
 
-**Responses API features**
+## 🖼️ Image generation
 
-- JSON object and JSON Schema structured output modes
-- Reasoning depth selection through `low`, `medium`, and `high`
-- Vision-compatible content where supported by the selected model
-- OpenAI-compatible SSE streaming, including a terminal completion event
-- Payload normalization designed to improve structured-response reliability
-
-### Anthropic Messages API
-
-`POST /v1/messages` is the VeroDesk compatibility layer for Anthropic Messages API consumers. It accepts Anthropic-style message requests, converts them to the relay representation, and converts streamed output into Anthropic-oriented SSE events such as `message_start`, content block events, delta events, and terminal events.
+`POST /v1/images/generations` uses an OpenAI-style image request. For compatible upstream engines, use `output_format` and `output_quality` to optimize the generated output.
 
 ```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/messages \
+curl -X POST https://YOUR_WORKER_URL/v1/images/generations \
   -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-3-5-sonnet",
-    "max_tokens": 512,
-    "messages": [
-      {"role": "user", "content": "Explain why cache invalidation is difficult."}
-    ]
-  }'
-```
-
-For streaming, include `"stream": true` and consume the response as Server-Sent Events using the Anthropic event contract. Exact model availability is dynamic; query `/v1/models` and select a model available in the upstream catalog.
-
-### Image Generation
-
-`POST /v1/images/generations` exposes image generation through an OpenAI-style request. Alongside standard fields such as `model`, `prompt`, `n`, and `size`, the VeroDesk image path supports output optimization overrides for applicable models.
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/images/generations \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
   -d '{
     "model": "black-forest-labs/flux-2-klein-4b",
     "prompt": "A cinematic sunset over mountains, high detail",
@@ -259,262 +230,118 @@ curl -X POST https://YOUR_WORKER_DOMAIN/v1/images/generations \
   }'
 ```
 
-`output_format` and `output_quality` are translated when the selected upstream image engine supports them. This permits bandwidth-conscious responses without requiring the client to know the upstream provider-specific payload shape.
+## 🎙️ Audio and text-to-speech
 
-### Audio: Speech-to-Text and Translation
-
-#### Transcription
-
-`POST /v1/audio/transcriptions` accepts `multipart/form-data` and translates audio into text through supported Whisper or Google Speech models.
+### 📝 Transcription and translation
 
 ```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/audio/transcriptions \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
+curl -X POST https://YOUR_WORKER_URL/v1/audio/transcriptions \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
   -F "file=@audio.mp3" \
   -F "model=whisper-1" \
   -F "response_format=text"
 ```
 
-| Field | Type | Required | Description |
-|---|---|---:|---|
-| `file` | File | Yes | Audio input such as mp3, mp4, m4a, wav, webm, ogg, or flac; upstream limits apply |
-| `model` | string | Yes | Available speech-recognition model identifier |
-| `language` | string | No | Language hint; use the syntax required by the selected engine |
-| `prompt` | string | No | Guidance for style, vocabulary, or transcription context |
-| `response_format` | string | No | Common formats include `json`, `text`, `verbose_json`, `srt`, and `vtt` |
-| `temperature` | number | No | Sampling temperature when supported by the selected engine |
-
-#### Translation
-
-`POST /v1/audio/translations` translates spoken audio to English text. It uses the same multipart workflow as transcription, except `language` is not applicable.
-
-```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/audio/translations \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -F "file=@foreign-audio.mp3" \
-  -F "model=whisper-1"
-```
-
-#### OpenAI SDK example
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://YOUR_WORKER_DOMAIN/v1",
-    api_key="YOUR_GATEWAY_OR_UPSTREAM_KEY",
-)
-
-with open("audio.mp3", "rb") as audio_file:
-    transcript = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file,
-    )
-
-print(transcript.text)
-```
-
-### Multi-Engine Text-to-Speech
-
-`POST /v1/audio/speech` is an OpenAI-style TTS endpoint with provider-aware routing. Clients send a standard speech request; the gateway selects and translates to the appropriate OpenAI, Google, or ElevenLabs engine.
-
-| Target engine | Representative model | Examples of translated engine-specific options |
+| Endpoint | Main fields | Notes |
 |---|---|---|
-| OpenAI | `tts-1` | Voice and output format |
-| Google | `google-tts` | `speakingRate`, `pitch`, language configuration |
-| ElevenLabs | `elevenlabs-tts` | `voice_settings`, stability, similarity settings |
+| `/v1/audio/transcriptions` | `file`, `model`, optional `language`, `prompt`, `response_format`, `temperature` | Output can include `json`, `text`, `verbose_json`, `srt`, or `vtt` where supported. |
+| `/v1/audio/translations` | `file`, `model` | Translates spoken audio to English text. |
+
+### 🔊 Multi-engine TTS
 
 ```bash
-curl -X POST https://YOUR_WORKER_DOMAIN/v1/audio/speech \
+curl -X POST https://YOUR_WORKER_URL/v1/audio/speech \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY" \
-  -d '{
-    "model": "tts-1",
-    "voice": "alloy",
-    "input": "Hello from VeroDesk 1min Gateway.",
-    "format": "mp3"
-  }' \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+  -d '{"model":"tts-1","voice":"alloy","input":"Hello from VeroDesk.","format":"mp3"}' \
   --output speech.mp3
 ```
 
-Provider-specific fields can be included when supported by the selected target engine. For example, a Google-targeted request may contain `speakingRate` and `pitch`, while an ElevenLabs-targeted request may include a `voice_settings` object. Use model discovery and upstream availability to select valid models and voices.
+| Target engine | Representative model | Supported options may include |
+|---|---|---|
+| OpenAI | `tts-1` | Voice and output format |
+| Google | `google-tts` | `speakingRate`, `pitch`, language settings |
+| ElevenLabs | `elevenlabs-tts` | `voice_settings`, stability, similarity settings |
 
-### Rate Limiting and Token Accounting
+## 🧩 Anthropic Messages API
 
-VeroDesk uses a Cloudflare KV-backed sliding-window design so usage controls remain effective across globally distributed Worker instances. The policy evaluates both request volume and weighted token usage, allowing the gateway to protect upstream spend rather than merely cap HTTP calls.
+`POST /v1/messages` accepts Anthropic-style messages and translates output to Anthropic-oriented SSE events such as `message_start`, content-block events, deltas, and terminal events.
 
-The rate-limiting workflow:
+```bash
+curl -X POST https://YOUR_WORKER_URL/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_AUTH_TOKEN" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "claude-3-5-sonnet",
+    "max_tokens": 512,
+    "messages": [{"role": "user", "content": "Explain why cache invalidation is difficult."}]
+  }'
+```
 
-1. Identifies the consumer through client IP and/or authorization credential.
-2. Evaluates the active sliding-window request and token counters.
-3. Calculates token usage with `gpt-tokenizer` where applicable and falls back to a heuristic when exact tokenization is not possible.
-4. Persists control state in `RATE_LIMIT_STORE` with an appropriate TTL.
-5. Returns an HTTP `429` response and rate-limit metadata when a policy is exceeded.
+Add `"stream": true` for Anthropic SSE. Model availability is dynamic, so query `/v1/models` first.
 
-Configure actual thresholds to match your upstream subscription, expected traffic, and risk tolerance. Do not rely on a README example as a quota policy; inspect the deployed configuration before operating a public endpoint.
+## 🛠️ Local development and manual deploy
 
-### CORS and Security Headers
+### 📋 Requirements
 
-Browser-facing deployments benefit from the middleware layer:
-
-- Cached CORS preflight responses reduce unnecessary requests reaching endpoint handlers.
-- A long preflight cache policy can be used to reduce repeated browser `OPTIONS` traffic.
-- Security headers such as `X-Content-Type-Options` and `Strict-Transport-Security` help enforce safer browser behavior on HTTPS deployments.
-- Gateway authentication avoids exposing the upstream billing credential to frontends and third-party workflow tools.
-
-Restrict allowed origins in production whenever possible. A permissive CORS policy is convenient for testing but inappropriate for a publicly reachable credentialed API.
-
-### Installation and Local Development
-
-#### Prerequisites
-
-- Node.js 18 or newer
-- npm
-- A Cloudflare account with Workers and KV enabled
-- Wrangler CLI for local development or manual deployment
-- A 1min.ai API key
-
-#### Clone and install
+- Node.js 18 or newer and npm
+- Cloudflare account with Workers and KV enabled
+- Wrangler authenticated against the target account
+- 1min.ai API key
 
 ```bash
 git clone https://github.com/samucamg/verodesk-1min-gateway.git
 cd verodesk-1min-gateway
 npm install
-```
-
-#### Configure local secrets
-
-Copy the local environment example and add development-only values:
-
-```bash
 cp .dev.vars.example .dev.vars
-```
 
-Use `.dev.vars` for local secrets. Keep it untracked. Configure non-secret upstream endpoint variables in `wrangler.jsonc` according to the project configuration, including the chat, feature, asset, and model endpoints when required.
-
-A representative setup is:
-
-```text
-ONE_MIN_API_KEY=replace_with_your_upstream_key
-AUTH_TOKEN=replace_with_a_long_gateway_token
-```
-
-#### Create KV namespaces
-
-```bash
 wrangler kv:namespace create "RATE_LIMIT_STORE"
 wrangler kv:namespace create "MODEL_CACHE"
-```
-
-Copy the generated namespace IDs into `wrangler.jsonc`:
-
-```jsonc
-{
-  "kv_namespaces": [
-    {
-      "binding": "RATE_LIMIT_STORE",
-      "id": "YOUR_RATE_LIMIT_NAMESPACE_ID"
-    },
-    {
-      "binding": "MODEL_CACHE",
-      "id": "YOUR_MODEL_CACHE_NAMESPACE_ID"
-    }
-  ]
-}
-```
-
-#### Start development mode
-
-```bash
 npm run dev
 ```
 
-The local Worker normally listens on the URL printed by Wrangler. Replace `YOUR_WORKER_DOMAIN` in the examples with that local origin for development.
+Use `.dev.vars` only for local secrets and keep it untracked. Add the generated KV IDs to their matching bindings in `wrangler.jsonc`.
 
-### Deploy with Cloudflare Dashboard
-
-The preferred repository-connected deployment path is Cloudflare Dashboard, not a mandatory local CLI deployment.
-
-1. Open **Cloudflare Dashboard** and go to **Workers & Pages**.
-2. Select **Create application** and choose the GitHub repository deployment flow available for Workers.
-3. Connect GitHub if prompted and select `samucamg/verodesk-1min-gateway`.
-4. Review the build and deployment settings detected from the repository.
-5. Create or bind the `RATE_LIMIT_STORE` and `MODEL_CACHE` KV namespaces in the Worker settings.
-6. Add `ONE_MIN_API_KEY` as an encrypted secret.
-7. Add `AUTH_TOKEN` as an encrypted secret if master proxy authentication is enabled.
-8. Deploy and copy the generated `workers.dev` URL.
-9. Call `GET /` and `GET /v1/models` to validate the deployment before connecting applications.
-
-The deploy button at the top of this document provides a one-click alternative for the Cloudflare deployment flow.
-
-### Manual Deployment
-
-For environments where Wrangler is preferred:
-
-```bash
-npm run build
-npm run deploy
+```text
+ONE_MIN_API_KEY=replace_with_your_upstream_key
+AUTH_TOKEN=replace_with_a_long_random_gateway_token
 ```
 
-Before deploying, validate the project and inspect the working tree:
+### ✅ Validate, build, and deploy
 
 ```bash
 npx tsc --noEmit
 git diff --check
-git status
-```
-
-### Custom Domain
-
-To expose the gateway as `api.example.com` rather than only through `workers.dev`:
-
-1. Ensure the domain is active in Cloudflare and DNS is managed by Cloudflare.
-2. Open **Workers & Pages** and select the deployed VeroDesk Worker.
-3. Open **Triggers**.
-4. Under **Custom Domains**, select **Add Custom Domain**.
-5. Enter `api.example.com` and complete the configuration.
-6. Update clients to use `https://api.example.com/v1` as their OpenAI-compatible base URL.
-
-Cloudflare provisions TLS and routes the custom domain to the Worker during this configuration flow.
-
-### Operational Validation
-
-Run these checks after a configuration or deployment change:
-
-```bash
-npx tsc --noEmit
 npm run build
-curl -i https://YOUR_WORKER_DOMAIN/
-curl -i https://YOUR_WORKER_DOMAIN/v1/models \
-  -H "Authorization: Bearer YOUR_GATEWAY_OR_UPSTREAM_KEY"
+npm run deploy
 ```
 
-Review the following before making the gateway public:
+## 🌐 Custom domain and operations
 
-- KV bindings resolve correctly in the target environment.
-- `ONE_MIN_API_KEY` and `AUTH_TOKEN` are configured as secrets, not committed variables.
-- CORS origins are restricted for browser deployments.
-- Model discovery returns expected upstream models.
-- A chat request, an SSE request, an audio request, and an image request complete successfully.
-- Rate-limit behavior is tested with non-production credentials.
+1. Ensure the domain is active and its DNS is managed by Cloudflare.
+2. Open the deployed VeroDesk Worker in **Workers & Pages**.
+3. Open **Triggers**, then **Custom Domains**.
+4. Select **Add Custom Domain**, enter `api.example.com`, and finish the flow.
+5. Use `https://api.example.com/v1` as the client base URL.
 
-### Troubleshooting
+Cloudflare provisions TLS and routing during this process. Restrict CORS to real production browser origins whenever possible.
+
+### 🩺 Troubleshooting
 
 | Symptom | Likely cause | Check |
 |---|---|---|
-| `401` or `403` | Missing, invalid, or mismatched gateway/upstream credential | Verify `Authorization`, `AUTH_TOKEN`, and `ONE_MIN_API_KEY` mode |
-| `429` | Request or token usage policy exceeded | Inspect rate-limit configuration and KV binding |
-| Model is unavailable | Dynamic upstream catalog changed | Call `GET /v1/models`; do not rely on a hardcoded model ID |
-| KV binding error | Namespace missing or binding ID is wrong | Check `wrangler.jsonc` and Worker production bindings |
-| Browser CORS failure | Origin is not permitted or preflight is blocked | Review CORS middleware and allowed origins |
-| Streaming corruption or no incremental output | Client is buffering SSE or expects the wrong event contract | Use `curl -N`; verify whether the consumer expects OpenAI or Anthropic events |
-| TTS parameter rejected | Engine-specific setting used with an incompatible target | Select the target engine/model and send only supported settings |
-| Deployment build failure | Dependencies or TypeScript configuration are inconsistent | Run `npm install`, `npx tsc --noEmit`, and `npm run build` locally |
+| `401` or `403` | Missing, invalid, or mismatched credential | `Authorization`, `AUTH_TOKEN`, and `ONE_MIN_API_KEY` mode |
+| `429` | Request or token policy exceeded | Rate-limit settings and KV binding |
+| Model unavailable | Upstream catalog changed | Call `GET /v1/models` |
+| KV binding error | Missing namespace or incorrect ID | `wrangler.jsonc` and production bindings |
+| Browser CORS error | Blocked origin or preflight failure | Allowed origins and CORS middleware |
+| No incremental streaming | Client buffers SSE or expects the wrong event contract | Test with `curl -N`; confirm OpenAI vs. Anthropic event format |
 
-### Architecture
+## 🏗️ Architecture
 
 ```text
-OpenAI SDK / Anthropic SDK / n8n / Frontend / Server
+OpenAI SDK / Anthropic SDK / n8n / Frontend / Backend
                          |
                          v
               Cloudflare Worker + Hono Router
@@ -534,57 +361,286 @@ OpenAI SDK / Anthropic SDK / n8n / Frontend / Server
                          |
                          v
                     1min.ai Upstream APIs
-                         |
-                         v
-      OpenAI, Anthropic, Google, ElevenLabs, Flux, Whisper
 ```
 
-### Technology Stack
-
-- **TypeScript:** typed application code and maintainable endpoint contracts
-- **Hono:** lightweight routing and edge middleware composition
-- **Cloudflare Workers:** serverless execution close to clients
-- **Cloudflare KV:** distributed model cache and rate-limit state
-- **gpt-tokenizer:** token-accounting support and fallback usage estimation
-- **Server-Sent Events:** real-time response streaming
-
-### Contributing
+## 🤝 Contributing and license
 
 1. Fork the repository or create a feature branch.
-2. Keep endpoint compatibility changes documented with request and response examples.
+2. Document compatibility changes with request and response examples.
 3. Run type validation and build checks.
-4. Add or update tests when applicable.
-5. Open a pull request with a focused description of the architectural impact.
+4. Add or update tests where applicable.
+5. Open a focused pull request.
 
-### License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is released under the [MIT License](LICENSE).
 
 ---
 
-<a id="português"></a>
-## Português
+<a id="portugues"></a>
+# 🇧🇷 Português
 
-### Visão Geral
+## ✨ Visão geral
 
-O **VeroDesk 1min Gateway** é um gateway universal, serverless e executado na borda com Cloudflare Workers. Ele recebe contratos compatíveis com OpenAI e Anthropic, traduz payloads para o ecossistema 1min.ai e centraliza autenticação, descoberta de modelos, streaming, controle de consumo e roteamento de recursos multimodais.
+O **VeroDesk 1min Gateway** é um gateway de API serverless e nativo de borda que disponibiliza o ecossistema 1min.ai por meio de contratos compatíveis com OpenAI e Anthropic. Ele centraliza credenciais upstream, descobre modelos dinamicamente, traduz payloads e eventos de streaming e expõe chat, respostas estruturadas, geração de imagens, transcrição, tradução e texto para fala multi-motor em um único endpoint controlado.
 
-O projeto é uma evolução independente inspirada na base arquitetural do `1min-relay-worker`. Ele preserva as capacidades de relay, cache, rate limiting, contagem de tokens, streaming, imagens e STT, e amplia a proposta com suporte à Messages API da Anthropic, TTS multi-motor, autenticação de proxy, otimizações de imagem e middleware de borda endurecido.
+Construído com TypeScript, Hono e Cloudflare Workers, ele atende SDKs, automações n8n, frontends privados, serviços de backend e aplicações de IA multi-provedor que precisam proteger credenciais upstream sem complicar a integração do cliente.
 
-### Funcionalidades
+| [![OpenAI](https://img.shields.io/badge/🔌-Compatível_com_OpenAI-412991?style=flat-square)](#-api-compativel-com-openai) | [![Anthropic](https://img.shields.io/badge/🧩-Ponte_Anthropic-191919?style=flat-square)](#-anthropic-messages-api-1) | [![Segurança](https://img.shields.io/badge/🔐-Credenciais_protegidas-16a34a?style=flat-square)](#-autenticacao-e-segredos) | [![Streaming](https://img.shields.io/badge/⚡-Streaming_SSE-f59e0b?style=flat-square)](#-modelos-streaming-cache-e-limites) |
+|---|---|---|---|
+| Chat, Responses, imagens, áudio e modelos | `POST /v1/messages` | Master proxy com `AUTH_TOKEN` | Eventos OpenAI e Anthropic |
 
-- **Compatibilidade OpenAI:** `/v1/chat/completions`, `/v1/responses`, `/v1/images/generations`, endpoints de áudio e `/v1/models`.
-- **Compatibilidade Anthropic:** `/v1/messages` traduz requisições e eventos SSE no padrão da Messages API.
-- **Autenticação dual:** o cliente pode usar sua chave upstream ou um `AUTH_TOKEN`; no modo proxy, o Worker injeta `ONE_MIN_API_KEY` sem expor a credencial de faturamento.
-- **TTS multi-motor:** `/v1/audio/speech` roteia para OpenAI, Google ou ElevenLabs e traduz opções específicas, como `speakingRate`, `pitch` e `voice_settings`.
-- **Cache de modelos em duas camadas:** memória do isolate por cerca de 5 minutos e Cloudflare KV por cerca de 1 hora.
-- **Rate limiting distribuído:** janela deslizante no KV por IP e/ou chave de autorização, ponderada por volume de requisições e tokens.
-- **Responses API estruturada:** saídas em JSON, JSON Schema, esforço de raciocínio e streaming SSE.
-- **Visão e imagens:** entrada de imagem em chat e geração de imagens com `output_format` e `output_quality` quando suportados pelo motor selecionado.
-- **Áudio:** transcrição, tradução e síntese de voz com contratos compatíveis com clientes OpenAI.
-- **Segurança de borda:** cache de preflight CORS e headers de segurança para reduzir carga e fortalecer consumo via navegador.
+## 🚀 Deploy Cloudflare em 1 clique
 
-### Início rápido
+> **Caminho de instalação recomendado.** Não é necessário terminal, clone local ou instalação do Wrangler. O fluxo de implantação cria uma cópia do repositório no GitHub e implanta o Worker no Cloudflare.
+
+<div align="center">
+
+## [Implante sua instância VeroDesk no Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/samucamg/verodesk-1min-gateway)
+
+[![Implantar no Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/samucamg/verodesk-1min-gateway)
+
+</div>
+
+### 📋 Pré-requisitos
+
+- Uma conta GitHub para criar a cópia do repositório durante o fluxo de implantação.
+- Uma conta Cloudflare com acesso a Workers e KV.
+- Uma chave de API 1min.ai válida para usar como `ONE_MIN_API_KEY`.
+
+### 🧩 Preenchimento do formulário de deploy
+
+A animação abaixo mostra o formulário de implantação em um clique e os valores necessários:
+
+![Formulário animado de deploy no Cloudflare: nome do projeto, dois namespaces KV, chave 1min.ai e token de autenticação](https://cdn.jsdelivr.net/gh/samucamg/imagens/Ingles-Curso/2026/08/1mim-deploy-cloudflare_1787339418.gif)
+
+> 📌 **Use três nomes distintos.** O nome do Worker/projeto e os dois nomes de namespace KV identificam recursos diferentes do Cloudflare; portanto, não podem ser iguais.
+
+| Campo | Exemplo seguro | Finalidade |
+|---|---|---|
+| **Nome do projeto** | `verodesk-1min-gateway` | Deve ser único na sua conta Cloudflare; é usado no nome do Worker e na URL padrão `workers.dev`. |
+| **Namespace KV de rate limit** | `verodesk-rate-limit-store` | Armazena o estado distribuído de limite de uso. Deve ser diferente do projeto e do cache de modelos. |
+| **Namespace KV de cache de modelos** | `verodesk-model-cache` | Armazena o cache do catálogo dinâmico. Deve ser diferente dos outros dois nomes. |
+| **`ONE_MIN_API_KEY`** | Sua chave de API 1min.ai | Credencial upstream protegida, associada ao consumo e faturamento. |
+| **`AUTH_TOKEN`** | Um segredo aleatório longo | Token privado usado pelos clientes no modo master proxy. |
+| **`ONE_MIN_CHAT_API_URL`** | `https://api.1min.ai/api/chat-with-ai` | Mantenha o padrão do formulário, salvo alteração documentada pela 1min.ai. |
+
+### 🔑 Gere um token de gateway seguro
+
+`AUTH_TOKEN` é a senha do seu gateway, não a chave 1min.ai. Guarde-o em um gerenciador de senhas e nunca o exponha a usuários não confiáveis. Use pelo menos 16 caracteres, com maiúsculas, minúsculas e números.
+
+```bash
+openssl rand -base64 24 | tr -d '\n' | tr '+/' 'Aa' | cut -c1-24
+```
+
+### ✅ Depois do deploy
+
+1. Copie a URL do Worker, normalmente `https://PROJETO.SEUSUBDOMINIO.workers.dev`.
+2. Abra `https://SUA_URL_DO_WORKER/` para verificar o health check.
+3. Teste o catálogo dinâmico com `GET /v1/models`.
+4. Configure a base URL do cliente como `https://SUA_URL_DO_WORKER/v1`.
+
+```bash
+curl https://SUA_URL_DO_WORKER/v1/models \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN"
+```
+
+## 🧰 Funcionalidades principais
+
+- **🔌 Compatibilidade OpenAI:** Chat Completions, Responses API, imagens, transcrição de áudio, tradução de áudio, geração de fala e descoberta de modelos.
+- **🧩 Compatibilidade Anthropic:** `POST /v1/messages` traduz requisições da Anthropic Messages API e eventos SSE.
+- **🔐 Master proxy:** `AUTH_TOKEN` permite acesso dos clientes sem que recebam `ONE_MIN_API_KEY`.
+- **🔊 TTS multi-motor:** um endpoint estilo OpenAI roteia para OpenAI, Google ou ElevenLabs.
+- **🧠 Modelos dinâmicos:** IDs de modelos e capacidades disponíveis vêm do catálogo upstream.
+- **⚡ Controles distribuídos:** Cloudflare KV mantém janela deslizante para requisições e uso ponderado de tokens.
+- **💾 Cache em duas camadas:** memória do isolate e KV armazenam o catálogo de modelos para velocidade e resiliência.
+- **🌊 Tradução de streaming:** tratamento SSE seguro em UTF-8 para consumidores OpenAI e Anthropic.
+- **🖼️ Controles de imagem:** fluxos compatíveis aceitam overrides de `output_format` e `output_quality`.
+- **🛡️ Proteção de borda:** preflight CORS em cache e headers de segurança para implantações acessadas pelo navegador.
+
+## 🗺️ Matriz de endpoints
+
+| Método | Endpoint | Compatibilidade | Descrição |
+|---|---|---|---|
+| `GET` | `/` | Gateway | Health check e descoberta de endpoints |
+| `GET` | `/v1/models` | Estilo OpenAI | Catálogo dinâmico de modelos upstream |
+| `POST` | `/v1/chat/completions` | OpenAI | Chat, entrada de visão e streaming SSE |
+| `POST` | `/v1/responses` | OpenAI | Responses API estruturada e controles de raciocínio |
+| `POST` | `/v1/messages` | Anthropic | Tradução da Messages API e streaming |
+| `POST` | `/v1/images/generations` | OpenAI | Geração de imagens |
+| `POST` | `/v1/audio/speech` | OpenAI | Texto para fala multi-motor |
+| `POST` | `/v1/audio/transcriptions` | OpenAI | Fala para texto via multipart |
+| `POST` | `/v1/audio/translations` | OpenAI | Tradução de áudio para inglês |
+
+## 🔐 Autenticação e segredos
+
+| Modo | Cliente envia | Comportamento do Worker | Melhor uso |
+|---|---|---|---|
+| Chave upstream do cliente | Chave 1min.ai em `Authorization: Bearer ...` | Repassa a credencial recebida ao upstream | Desenvolvimento e clientes diretos totalmente confiáveis |
+| Master proxy | `AUTH_TOKEN` do gateway em `Authorization: Bearer ...` | Valida o token e injeta `ONE_MIN_API_KEY` | n8n, frontends, APIs internas e produção |
+
+No modo master proxy, mantenha `ONE_MIN_API_KEY` exclusivamente em secrets do Cloudflare. Nunca a coloque em commits, exemplos de README, capturas de tela, JavaScript de frontend ou URLs.
+
+### 🔄 Rotação de credenciais
+
+Se uma das credenciais for exposta: revogue ou regenere o valor, atualize o secret correspondente no Cloudflare, faça novo deploy se necessário, atualize as aplicações autorizadas e revise consumo e logs.
+
+## 🧠 Modelos, streaming, cache e limites
+
+`GET /v1/models` retorna o catálogo ativo descoberto na 1min.ai. Capacidades de modelo — visão, suporte a intérprete de código, busca web e modalidades — são derivadas dos metadados upstream quando disponíveis. Sempre consulte esse endpoint antes de fixar um ID de modelo.
+
+### 💾 Estratégia de cache de modelos
+
+1. O Worker verifica a memória do isolate ativo.
+2. Em caso de ausência, consulta o namespace `MODEL_CACHE` no Cloudflare KV.
+3. Em caso de ausência ou expiração no KV, solicita o catálogo à 1min.ai e atualiza as duas camadas.
+4. Um catálogo previamente válido pode ser usado durante uma falha temporária do upstream.
+
+As janelas previstas são aproximadamente 5 minutos em memória e 1 hora no KV.
+
+### 🚦 Rate limiting e contagem de tokens
+
+Janelas deslizantes no Cloudflare KV identificam um consumidor por IP e/ou credencial, avaliam contadores de requisição e tokens ponderados, persistem estado em `RATE_LIMIT_STORE` e retornam HTTP `429` quando a política ativa é excedida. O consumo usa `gpt-tokenizer` quando aplicável, com fallback heurístico.
+
+Configure limites reais de acordo com seu plano upstream, tráfego esperado e tolerância de risco; valores de README não são uma política de cotas de produção.
+
+### 🌊 Streaming SSE
+
+Defina `stream: true` para receber Server-Sent Events de modo incremental. Em testes de terminal, use `curl -N` para evitar que a resposta seja armazenada em buffer.
+
+## 💬 API compatível com OpenAI
+
+### ✍️ Chat Completions
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Explique a finalidade de um gateway de API distribuído."}],
+    "stream": false
+  }'
+```
+
+### 👁️ Entrada de visão
+
+Para modelos compatíveis com visão, envie um array com conteúdo de texto e `image_url`:
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "O que há nesta imagem?"},
+      {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}}
+    ]
+  }]
+}
+```
+
+### 📦 Responses API e saída estruturada
+
+`POST /v1/responses` suporta `input` simples, `messages` conversacionais, `json_object`, JSON Schema, controles de raciocínio, entrada compatível com visão e streaming.
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{
+    "model": "gpt-4.1",
+    "input": "Crie um perfil compacto para um engenheiro de software.",
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "perfil_de_usuario",
+        "schema": {
+          "type": "object",
+          "properties": {"nome": {"type": "string"}, "habilidades": {"type": "array", "items": {"type": "string"}}},
+          "required": ["nome"]
+        }
+      }
+    },
+    "reasoning_effort": "high"
+  }'
+```
+
+## 🖼️ Geração de imagens
+
+`POST /v1/images/generations` usa uma requisição de imagem no estilo OpenAI. Para motores upstream compatíveis, use `output_format` e `output_quality` para otimizar a saída gerada.
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{
+    "model": "black-forest-labs/flux-2-klein-4b",
+    "prompt": "Pôr do sol cinematográfico sobre montanhas, alto nível de detalhe",
+    "n": 1,
+    "size": "1024x1024",
+    "output_format": "webp",
+    "output_quality": 85
+  }'
+```
+
+## 🎙️ Áudio e texto para fala
+
+### 📝 Transcrição e tradução
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/audio/transcriptions \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -F "file=@audio.mp3" \
+  -F "model=whisper-1" \
+  -F "response_format=text"
+```
+
+| Endpoint | Campos principais | Observações |
+|---|---|---|
+| `/v1/audio/transcriptions` | `file`, `model`, `language`, `prompt`, `response_format`, `temperature` | Saídas podem incluir `json`, `text`, `verbose_json`, `srt` e `vtt`, quando suportadas. |
+| `/v1/audio/translations` | `file`, `model` | Traduz fala para texto em inglês. |
+
+### 🔊 TTS multi-motor
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{"model":"tts-1","voice":"alloy","input":"Olá, VeroDesk.","format":"mp3"}' \
+  --output fala.mp3
+```
+
+| Motor de destino | Modelo representativo | Opções compatíveis podem incluir |
+|---|---|---|
+| OpenAI | `tts-1` | Voz e formato de saída |
+| Google | `google-tts` | `speakingRate`, `pitch` e idioma |
+| ElevenLabs | `elevenlabs-tts` | `voice_settings`, estabilidade e similaridade |
+
+## 🧩 Anthropic Messages API
+
+`POST /v1/messages` aceita mensagens no formato Anthropic e traduz a saída para eventos SSE orientados a Anthropic, como `message_start`, eventos de bloco de conteúdo, deltas e eventos terminais.
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: SEU_AUTH_TOKEN" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "claude-3-5-sonnet",
+    "max_tokens": 512,
+    "messages": [{"role": "user", "content": "Explique por que a invalidação de cache é difícil."}]
+  }'
+```
+
+Acrescente `"stream": true` para SSE Anthropic. A disponibilidade de modelos é dinâmica, então consulte `/v1/models` primeiro.
+
+## 🛠️ Desenvolvimento local e deploy manual
+
+### 📋 Requisitos
+
+- Node.js 18 ou superior e npm
+- Conta Cloudflare com Workers e KV habilitados
+- Wrangler autenticado na conta de destino
+- Chave de API 1min.ai
 
 ```bash
 git clone https://github.com/samucamg/verodesk-1min-gateway.git
@@ -594,82 +650,77 @@ cp .dev.vars.example .dev.vars
 
 wrangler kv:namespace create "RATE_LIMIT_STORE"
 wrangler kv:namespace create "MODEL_CACHE"
-
 npm run dev
 ```
 
-Cadastre os IDs dos namespaces KV em `wrangler.jsonc`. Para execução protegida, configure `ONE_MIN_API_KEY` e `AUTH_TOKEN` como segredos no ambiente Cloudflare; jamais os versione no repositório.
+Use `.dev.vars` somente para segredos locais e mantenha-o fora do Git. Adicione os IDs de KV gerados aos bindings correspondentes em `wrangler.jsonc`.
 
-### Deploy pelo Dashboard Cloudflare
-
-1. Acesse **Workers & Pages** no painel Cloudflare.
-2. Crie um Worker a partir do repositório GitHub `samucamg/verodesk-1min-gateway`.
-3. Configure os bindings `RATE_LIMIT_STORE` e `MODEL_CACHE`.
-4. Adicione `ONE_MIN_API_KEY` como secret.
-5. Adicione `AUTH_TOKEN` como secret caso utilize o modo master proxy.
-6. Faça o deploy e valide `GET /` e `GET /v1/models`.
-
-O botão **Deploy to Cloudflare** no início deste documento é a alternativa de implantação com um clique.
-
-### Domínio personalizado
-
-No Worker implantado, abra **Triggers** em **Workers & Pages**, escolha **Add Custom Domain** e informe, por exemplo, `api.seudominio.com.br`. Com o DNS gerenciado pela Cloudflare, o TLS e o roteamento são provisionados durante o fluxo.
-
-### Uso com SDK OpenAI
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://api.seudominio.com.br/v1",
-    api_key="SEU_AUTH_TOKEN",
-)
-
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Olá, VeroDesk."}],
-)
-
-print(response.choices[0].message.content)
+```text
+ONE_MIN_API_KEY=substitua_pela_sua_chave_upstream
+AUTH_TOKEN=substitua_por_um_token_aleatorio_longo
 ```
 
-Consulte as seções em inglês para a matriz completa de endpoints, exemplos de `curl`, parâmetros de áudio, JSON Schema, Anthropic Messages API, arquitetura e diagnóstico.
-
----
-
-<a id="español"></a>
-## Español
-
-### Resumen
-
-**VeroDesk 1min Gateway** es un gateway universal y serverless ejecutado en Cloudflare Workers. Recibe contratos compatibles con OpenAI y Anthropic, traduce solicitudes al ecosistema 1min.ai y concentra autenticación, catálogo dinámico de modelos, streaming, control de consumo y enrutamiento multimodal.
-
-Es una evolución independiente inspirada en la arquitectura de `1min-relay-worker`, no un fork presentado como tal. Mantiene relay, caché, límites distribuidos, conteo de tokens, streaming, imágenes y STT, y añade Anthropic Messages API, TTS multi-motor, autenticación proxy, controles de salida de imágenes y middleware de edge reforzado.
-
-### Capacidades
-
-- API compatible con OpenAI para chat, Responses, imágenes, audio y modelos.
-- Puente para Anthropic Messages API mediante `POST /v1/messages`.
-- Modo proxy con `AUTH_TOKEN`, que protege `ONE_MIN_API_KEY` frente a clientes finales.
-- TTS desde un único endpoint para OpenAI, Google y ElevenLabs.
-- Caché de modelos de dos niveles: memoria del isolate y Cloudflare KV.
-- Ventana deslizante distribuida para solicitudes y uso ponderado de tokens.
-- JSON Schema, objetos JSON, razonamiento y streaming SSE en Responses API.
-- Transcripción, traducción y síntesis de audio; visión e imágenes con optimizaciones cuando el motor las admite.
-
-### Implementación
+### ✅ Validar, buildar e implantar
 
 ```bash
-git clone https://github.com/samucamg/verodesk-1min-gateway.git
-cd verodesk-1min-gateway
-npm install
-
-wrangler kv:namespace create "RATE_LIMIT_STORE"
-wrangler kv:namespace create "MODEL_CACHE"
-
-npm run dev
+npx tsc --noEmit
+git diff --check
+npm run build
+npm run deploy
 ```
 
-Configura los IDs de KV en `wrangler.jsonc` y guarda `ONE_MIN_API_KEY` y `AUTH_TOKEN` como secretos de Cloudflare. Para desplegar desde GitHub, crea un Worker en **Workers & Pages**, selecciona el repositorio, enlaza los namespaces KV, añade los secretos y publica.
+## 🌐 Domínio personalizado e operação
 
-Consulta la sección en inglés para contratos completos de endpoints, ejemplos de solicitudes, configuración de dominio personalizado, diagnóstico y detalles de arquitectura.
+1. Garanta que o domínio esteja ativo e com DNS gerenciado pela Cloudflare.
+2. Abra o Worker VeroDesk implantado em **Workers & Pages**.
+3. Abra **Triggers** e depois **Custom Domains**.
+4. Selecione **Add Custom Domain**, informe `api.seudominio.com.br` e conclua o fluxo.
+5. Use `https://api.seudominio.com.br/v1` como base URL do cliente.
+
+O Cloudflare provisiona TLS e roteamento nesse processo. Restrinja CORS às origens reais de navegador em produção sempre que possível.
+
+### 🩺 Diagnóstico
+
+| Sintoma | Causa provável | Verifique |
+|---|---|---|
+| `401` ou `403` | Credencial ausente, inválida ou incompatível | `Authorization`, `AUTH_TOKEN` e modo `ONE_MIN_API_KEY` |
+| `429` | Política de requisições ou tokens excedida | Configuração de rate limit e binding KV |
+| Modelo indisponível | Catálogo upstream mudou | Chame `GET /v1/models` |
+| Erro de binding KV | Namespace ausente ou ID incorreto | `wrangler.jsonc` e bindings de produção |
+| Erro CORS no navegador | Origem bloqueada ou falha no preflight | Origens permitidas e middleware CORS |
+| Streaming não incremental | Cliente faz buffer de SSE ou espera outro contrato | Teste com `curl -N`; confirme o formato OpenAI ou Anthropic |
+
+## 🏗️ Arquitetura
+
+```text
+SDK OpenAI / SDK Anthropic / n8n / Frontend / Backend
+                         |
+                         v
+              Cloudflare Worker + Hono Router
+                         |
+      +------------------+-------------------+
+      |                  |                   |
+      v                  v                   v
+ Autenticação        CORS/Segurança      Rate Limiter
+ Master Proxy        Cache Preflight     Cloudflare KV
+      |                                      |
+      +------------------+-------------------+
+                         v
+ Chat | Responses | Messages | Imagens | Áudio | Modelos
+                         |
+                         v
+             Tradutores de Payload e Eventos SSE
+                         |
+                         v
+                   APIs upstream da 1min.ai
+```
+
+## 🤝 Contribuições e licença
+
+1. Faça um fork ou crie uma branch de funcionalidade.
+2. Documente mudanças de compatibilidade com exemplos de requisição e resposta.
+3. Execute validação de tipos e build.
+4. Adicione ou atualize testes quando aplicável.
+5. Abra um pull request focado e objetivo.
+
+Este projeto é disponibilizado sob a [Licença MIT](LICENSE).
