@@ -22,13 +22,23 @@ import {
   writeSSEEvent,
 } from "../utils/sse";
 import { executeStreamingPipeline } from "../utils/streaming";
+import { calculateTokens, estimateInputTokens } from "../utils/tokens";
 import { BaseTextHandler } from "./base";
 
 export class ChatHandler extends BaseTextHandler {
   async handleChatCompletionsWithBody(
     requestBody: ChatCompletionRequest,
     apiKey: string,
+    signal?: AbortSignal
   ): Promise<Response> {
+    // Sanitizacao explicita: Remover parametros nao suportados pela 1min.ai
+    // Forcamos o cast para any para garantir a exclusao mesmo se a tipagem nao prever
+    delete (requestBody as any).temperature;
+    delete (requestBody as any).top_p;
+    delete (requestBody as any).max_tokens;
+    delete (requestBody as any).frequency_penalty;
+    delete (requestBody as any).presence_penalty;
+
     if (!requestBody.messages || !Array.isArray(requestBody.messages)) {
       throw new ValidationError(
         "Messages field is required and must be an array",
@@ -51,6 +61,7 @@ export class ChatHandler extends BaseTextHandler {
         cleanModel,
         apiKey,
         webSearchConfig,
+        signal
       );
     } else {
       return this.handleNonStreamingChat(
@@ -58,6 +69,7 @@ export class ChatHandler extends BaseTextHandler {
         cleanModel,
         apiKey,
         webSearchConfig,
+        signal
       );
     }
   }
@@ -67,15 +79,17 @@ export class ChatHandler extends BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
+    signal?: AbortSignal
   ): Promise<Response> {
     const data = await this.sendNonStreamingRequest(
       messages,
       model,
       apiKey,
       webSearchConfig,
+      signal
     );
 
-    const openAIResponse = this.transformToOpenAIFormat(data, model);
+    const openAIResponse = this.transformToOpenAIFormat(data, model, messages);
     return createSuccessResponse(openAIResponse);
   }
 
@@ -84,12 +98,14 @@ export class ChatHandler extends BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
+    signal?: AbortSignal
   ): Promise<Response> {
     const response = await this.sendStreamingRequest(
       messages,
       model,
       apiKey,
       webSearchConfig,
+      signal
     );
 
     return executeStreamingPipeline(response, {
@@ -112,7 +128,15 @@ export class ChatHandler extends BaseTextHandler {
   private transformToOpenAIFormat(
     data: OneMinChatResponse,
     model: string,
+    messages: Message[]
   ): ChatCompletionResponse {
+    const content = extractOneMinContent(data);
+    
+    // Calculo Real de Tokens
+    const promptTokens = estimateInputTokens(messages);
+    const completionTokens = calculateTokens(content, model);
+    const totalTokens = promptTokens + completionTokens;
+
     return {
       id: `chatcmpl-${crypto.randomUUID()}`,
       object: "chat.completion",
@@ -123,15 +147,15 @@ export class ChatHandler extends BaseTextHandler {
           index: 0,
           message: {
             role: "assistant",
-            content: extractOneMinContent(data),
+            content: content,
           },
           finish_reason: "stop",
         },
       ],
       usage: {
-        prompt_tokens: data.usage?.prompt_tokens || 0,
-        completion_tokens: data.usage?.completion_tokens || 0,
-        total_tokens: data.usage?.total_tokens || 0,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: totalTokens,
       },
     };
   }

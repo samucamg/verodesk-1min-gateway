@@ -31,3 +31,9 @@ worker/
 *.tsbuildinfo
 *.d.ts
 
+
+# Backups e Artefatos Locais
+*.bak
+*.custom_domain_bkp
+*:Zone.Identifier
+.dev.vars

@@ -11,7 +11,8 @@ export const RATE_LIMIT_CONFIG = {
 
 // Default model configuration
 export const DEFAULT_MODEL = "open-mistral-nemo";
-export const DEFAULT_IMAGE_MODEL = "black-forest-labs/flux-schnell";
+export const DEFAULT_IMAGE_MODEL = "black-forest-labs/flux-2-klein-4b";
+export const DEFAULT_TTS_MODEL = "tts-1";
 
 // Fixed token estimate for non-text requests (audio, image) in rate limiting
 export const MEDIA_REQUEST_TOKEN_ESTIMATE = 1000;

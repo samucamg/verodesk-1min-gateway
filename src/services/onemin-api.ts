@@ -67,6 +67,7 @@ export class OneMinApiService {
     requestBody: OneMinRequestBody,
     isStreaming: boolean = false,
     apiKey?: string,
+    signal?: AbortSignal,
   ): Promise<Response> {
     const apiUrl = isStreaming
       ? `${this.env.ONE_MIN_CHAT_API_URL}?isStreaming=true`
@@ -85,6 +86,7 @@ export class OneMinApiService {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
+        signal: signal,
       });
 
       if (!response.ok) {
@@ -113,6 +115,7 @@ export class OneMinApiService {
             method: "POST",
             headers,
             body: JSON.stringify(fallbackRequestBody),
+            signal: signal,
           });
 
           if (fallbackResponse.ok) {
@@ -121,10 +124,7 @@ export class OneMinApiService {
           }
         }
 
-        throw new ApiError(
-          sanitizeUpstreamError(response.status),
-          response.status,
-        );
+        throw new ApiError(rawErrorBody, response.status);
       }
 
       return response;
@@ -178,10 +178,7 @@ export class OneMinApiService {
       const rawErrorBody = await response.text().catch(() => "(unreadable)");
       const errorBody = rawErrorBody.slice(0, 500);
       console.error("1min.ai image API error:", errorBody);
-      throw new ApiError(
-        sanitizeUpstreamError(response.status),
-        response.status,
-      );
+      throw new ApiError(rawErrorBody, response.status);
     }
 
     const data = await response.json();
@@ -372,12 +369,9 @@ export class OneMinApiService {
     );
 
     if (!response.ok) {
-      const rawError = await response.text().catch(() => "(unreadable)");
-      console.error("1min.ai audio API error:", rawError.slice(0, 500));
-      throw new ApiError(
-        sanitizeUpstreamError(response.status),
-        response.status,
-      );
+      const rawErrorBody = await response.text().catch(() => "(unreadable)");
+      console.error("1min.ai audio API error:", rawErrorBody.slice(0, 500));
+      throw new ApiError(rawErrorBody, response.status);
     }
 
     return (await response.json()) as OneMinChatResponse;
