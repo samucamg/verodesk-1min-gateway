@@ -258,6 +258,22 @@ VeroDesk 1min Gateway integrates seamlessly with **n8n AI Agent**, **OpenAI Chat
 2. When the RAG retrieval returns documents with metadata (e.g., `pageContent` and timestamps), the gateway's built-in **`ResponseSanitizer`** automatically extracts clean text and formats it as `[Contexto do Sistema - Informação Recuperada]`.
 3. **Anti-Leak Guarantee:** The agent's final text and voice messages (for WhatsApp, Telegram, or TTS) remain completely clean and human-friendly—free of `<think>`, `Tool: [...]`, or raw JSON leakage.
 
+### 🔬 DeepSeek Harness, Agent Frameworks & Benchmark Compatibility
+
+The gateway is fully compatible with **`deepseek-harness`**, **`lm-evaluation-harness`**, **SWE-bench**, **AutoGen**, **CrewAI**, and **LangChain** agent evaluation testbeds.
+
+#### Key Architectural Highlights for Test Harnesses:
+1. **DeepSeek-R1 `<think>` Stripping:** Models with internal reasoning (such as DeepSeek-R1 or QwQ) emit `<think>...</think>` blocks. The gateway's `ToolCallingEmulator` and `ResponseSanitizer` isolate and strip these thoughts before tool extraction, preventing regex/JSON parser breaks in automated evaluation harnesses.
+2. **Sampling Parameter Normalization:** Test suites often hardcode `temperature=0.0` or `top_p=1.0`. Because 1min.ai does not expose sampling controls upstream, the gateway sanitizes these parameters on ingestion to prevent `400 Bad Request` errors.
+3. **Multi-Turn Tool Execution:** Full multi-step function execution loops (`tool_calls` $\rightarrow$ `role: "tool"` $\rightarrow$ final answer) are cleanly preserved and re-serialized across turns.
+
+```bash
+# Example environment configuration for DeepSeek Harness / Evaluators:
+export OPENAI_BASE_URL="https://YOUR_WORKER_URL/v1"
+export OPENAI_API_KEY="YOUR_AUTH_TOKEN"
+export MODEL_NAME="deepseek/deepseek-chat" # or deepseek/deepseek-r1
+```
+
 ### 👁️ Vision input
 
 For a vision-capable model, send an array containing text and `image_url` content:
@@ -720,6 +736,22 @@ O VeroDesk 1min Gateway se integra de forma transparente com os nós **AI Agent*
 1. Conecte um nó de banco vetorial (ex: **Qdrant Vector Store**, **Pinecone**, **Postgres / pgvector**) como Ferramenta de Recuperação (Retriever) no n8n.
 2. Quando a busca vetorial recuperar documentos com metadados (ex: `pageContent` e `metadata.timestamp`), o **`ResponseSanitizer`** do gateway desempacota o payload em texto puro legível, formatando como `[Contexto do Sistema - Informação Recuperada]`.
 3. **Garantia Anti-Vazamento:** A resposta final entregue ao usuário (WhatsApp, Telegram ou sintetizadores de voz/TTS) conterá apenas a fala humana natural, sem vazar código JSON, raciocínio `<think>` ou tags residuais `Tool:`.
+
+### 🔬 Compatibilidade com DeepSeek Harness, Frameworks de Agentes e Benchmarks
+
+O gateway é 100% compatível com **`deepseek-harness`**, **`lm-evaluation-harness`**, **SWE-bench**, **AutoGen**, **CrewAI** e ambientes de teste de agentes **LangChain**.
+
+#### Diferenciais para Suítes de Teste e Avaliação:
+1. **Tratamento Especial para DeepSeek-R1 (`<think>`):** Modelos de raciocínio como DeepSeek-R1 ou QwQ geram blocos `<think>...</think>`. O `ToolCallingEmulator` e o `ResponseSanitizer` do gateway isolam e filtram esses pensamentos antes da extração das ferramentas, impedindo que quebrem os parsers JSON do harness.
+2. **Normalização de Parâmetros de Amostragem:** Harnesses de benchmark frequentemente fixam `temperature=0.0` ou `top_p=1.0`. Como a API da 1min.ai não recebe esses parâmetros, o gateway remove-os silenciosamente na entrada, evitando erros `400 Bad Request`.
+3. **Execução Multi-Turn Completa:** O ciclo completo de avaliação de ferramentas (`assistant` com `tool_calls` $\rightarrow$ `role: "tool"` com `tool_call_id` $\rightarrow$ resposta final) é preservado e serializado sem perda de contexto entre os passos.
+
+```bash
+# Exemplo de configuração de ambiente para DeepSeek Harness / Avaliadores:
+export OPENAI_BASE_URL="https://SUA_URL_DO_WORKER/v1"
+export OPENAI_API_KEY="SEU_AUTH_TOKEN"
+export MODEL_NAME="deepseek/deepseek-chat" # ou deepseek/deepseek-r1
+```
 
 ### 👁️ Entrada de visão
 
