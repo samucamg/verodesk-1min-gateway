@@ -234,6 +234,30 @@ if (first.choices[0].finish_reason === "tool_calls") {
 
 The gateway does not execute functions, shell commands, or client-side tools itself. It only normalizes the model request and response; the calling application must authorize and execute each tool.
 
+### 🤖 Setting up in n8n (AI Agent, Tools & RAG)
+
+VeroDesk 1min Gateway integrates seamlessly with **n8n AI Agent**, **OpenAI Chat Model**, and **LangChain / Vector Store** nodes.
+
+#### 1. Configure the OpenAI Model Node in n8n
+1. Add an **OpenAI Chat Model** node (or connect it as the Model sub-node of an **AI Agent**).
+2. Create/edit the OpenAI Credential:
+   * **API Key:** Your `AUTH_TOKEN` (from your Cloudflare Worker).
+   * **Base URL (under Advanced Options):** `https://YOUR_WORKER_URL/v1`
+3. In the Model field, choose or type any supported model ID (e.g., `gpt-4o`, `claude-3-5-sonnet`, `deepseek/deepseek-chat`).
+   * *Tip:* Append `:online` (e.g. `gpt-4o:online`) to automatically activate 1min.ai native web search without needing external search nodes.
+
+#### 2. Connecting Tools (Web Search, APIs, Calculators)
+1. Add an **AI Agent** node in n8n with **Tools Agent** or **Conversational Agent** mode.
+2. Attach Tool sub-nodes to the AI Agent:
+   * **Custom Tool / HTTP Request Tool:** For external APIs or database lookups.
+   * **Search Tool:** (e.g., Tavily, SerpAPI, SearXNG, or Custom HTTP Tool).
+3. The gateway will emulate standard OpenAI `tool_calls` for models that lack native function calling, returning strict tool requests to n8n and receiving tool results back via `role: "tool"`.
+
+#### 3. Connecting RAG (Vector Stores & Memory)
+1. Connect a Vector Store node (e.g., **Qdrant Vector Store**, **Pinecone**, **Postgres / pgvector**, or **In-Memory Vector Store**) as a Tool or Retriever in n8n.
+2. When the RAG retrieval returns documents with metadata (e.g., `pageContent` and timestamps), the gateway's built-in **`ResponseSanitizer`** automatically extracts clean text and formats it as `[Contexto do Sistema - Informação Recuperada]`.
+3. **Anti-Leak Guarantee:** The agent's final text and voice messages (for WhatsApp, Telegram, or TTS) remain completely clean and human-friendly—free of `<think>`, `Tool: [...]`, or raw JSON leakage.
+
 ### 👁️ Vision input
 
 For a vision-capable model, send an array containing text and `image_url` content:
@@ -672,6 +696,30 @@ if (primeira.choices[0].finish_reason === "tool_calls") {
 ```
 
 O gateway não executa funções, comandos de shell ou ferramentas do cliente. Ele apenas normaliza a requisição e a resposta do modelo; a aplicação chamadora precisa autorizar e executar cada ferramenta.
+
+### 🤖 Configuração no n8n (AI Agent, Ferramentas e RAG)
+
+O VeroDesk 1min Gateway se integra de forma transparente com os nós **AI Agent**, **OpenAI Chat Model** e **Vector Store / LangChain** do **n8n**.
+
+#### 1. Configurar o nó OpenAI Chat Model no n8n
+1. Adicione um nó **OpenAI Chat Model** (ou conecte-o como sub-nó de modelo em um **AI Agent**).
+2. Crie ou edite a credencial OpenAI:
+   * **API Key:** O seu `AUTH_TOKEN` (definido no Cloudflare Worker).
+   * **Base URL (em Opções Avançadas):** `https://SUA_URL_DO_WORKER/v1`
+3. No campo de modelo, digite ou selecione o ID desejado (ex: `gpt-4o`, `claude-3-5-sonnet`, `deepseek/deepseek-chat`).
+   * *Dica:* Acrescente o sufixo `:online` (ex: `gpt-4o:online`) para ativar a busca web nativa da 1min.ai sem precisar de nós externos de busca.
+
+#### 2. Conectando Ferramentas (Busca Web, APIs, Calculadoras)
+1. Configure o nó **AI Agent** no n8n no modo **Tools Agent** ou **Conversational Agent**.
+2. Conecte sub-nós de ferramentas ao AI Agent:
+   * **Custom Tool / HTTP Request:** Para consultas a bancos de dados, ERPs ou APIs externas.
+   * **Ferramenta de Busca Web:** (ex: Tavily, SerpAPI, SearXNG ou ferramenta HTTP customizada).
+3. O gateway emula chamadas de ferramentas no padrão OpenAI (`tool_calls`), retornando as instruções de execução para o n8n e recebendo o retorno em turnos subsequentes (`role: "tool"`).
+
+#### 3. Conectando RAG (Bancos Vetoriais e Memória)
+1. Conecte um nó de banco vetorial (ex: **Qdrant Vector Store**, **Pinecone**, **Postgres / pgvector**) como Ferramenta de Recuperação (Retriever) no n8n.
+2. Quando a busca vetorial recuperar documentos com metadados (ex: `pageContent` e `metadata.timestamp`), o **`ResponseSanitizer`** do gateway desempacota o payload em texto puro legível, formatando como `[Contexto do Sistema - Informação Recuperada]`.
+3. **Garantia Anti-Vazamento:** A resposta final entregue ao usuário (WhatsApp, Telegram ou sintetizadores de voz/TTS) conterá apenas a fala humana natural, sem vazar código JSON, raciocínio `<think>` ou tags residuais `Tool:`.
 
 ### 👁️ Entrada de visão
 
