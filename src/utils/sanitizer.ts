@@ -15,10 +15,14 @@ export class ResponseSanitizer {
     // 1. Remove blocos de raciocínio de modelos (<think>...</think>)
     cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, "");
 
-    // 2. Remove blocos vazados no formato "Tool: [...]" ou "Tool: {...}"
+    // 2. Remove tags residuais de ferramentas de modelos estilo Hermes / XML (<tool_call>, <tools>)
+    cleaned = cleaned.replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, "");
+    cleaned = cleaned.replace(/<tools>[\s\S]*?<\/tools>/gi, "");
+
+    // 3. Remove blocos vazados no formato "Tool: [...]" ou "Tool: {...}"
     cleaned = cleaned.replace(/Tool:\s*(?:\[[\s\S]*?\]|\{[\s\S]*?\})\s*/gi, "");
 
-    // 3. Remove blocos Markdown ```json contendo tool_calls vazados
+    // 4. Remove blocos Markdown ```json contendo tool_calls vazados
     cleaned = cleaned.replace(
       /```(?:json)?\s*\{\s*"tool_calls"[\s\S]*?\}\s*```/gi,
       "",
