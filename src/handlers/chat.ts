@@ -12,6 +12,9 @@ import type {
 import {
   createSuccessResponse,
   extractOneMinContent,
+  ResponseSanitizer,
+  ToolCallingEmulator,
+  type ToolDefinition,
   ValidationError,
   validateModelAndMessages,
   type WebSearchConfig,
@@ -29,7 +32,7 @@ export class ChatHandler extends BaseTextHandler {
   async handleChatCompletionsWithBody(
     requestBody: ChatCompletionRequest,
     apiKey: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<Response> {
     // Sanitizacao explicita: Remover parametros nao suportados pela 1min.ai
     // Forcamos o cast para any para garantir a exclusao mesmo se a tipagem nao prever
@@ -55,21 +58,39 @@ export class ChatHandler extends BaseTextHandler {
         this.env,
       );
 
+    const hasTools =
+      Array.isArray(requestBody.tools) && requestBody.tools.length > 0;
+    const tools = hasTools
+      ? (requestBody.tools as ToolDefinition[])
+      : undefined;
+    const toolChoice = requestBody.tool_choice;
+
+    let finalMessages = processedMessages;
+    if (hasTools && tools && toolChoice !== "none") {
+      finalMessages = ToolCallingEmulator.injectToolsIntoMessages(
+        processedMessages,
+        tools,
+        toolChoice,
+      );
+    }
+
     if (requestBody.stream) {
       return this.handleStreamingChat(
-        processedMessages,
+        finalMessages,
         cleanModel,
         apiKey,
         webSearchConfig,
-        signal
+        signal,
+        tools,
       );
     } else {
       return this.handleNonStreamingChat(
-        processedMessages,
+        finalMessages,
         cleanModel,
         apiKey,
         webSearchConfig,
-        signal
+        signal,
+        tools,
       );
     }
   }
@@ -79,17 +100,23 @@ export class ChatHandler extends BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    tools?: ToolDefinition[],
   ): Promise<Response> {
     const data = await this.sendNonStreamingRequest(
       messages,
       model,
       apiKey,
       webSearchConfig,
-      signal
+      signal,
     );
 
-    const openAIResponse = this.transformToOpenAIFormat(data, model, messages);
+    const openAIResponse = this.transformToOpenAIFormat(
+      data,
+      model,
+      messages,
+      tools,
+    );
     return createSuccessResponse(openAIResponse);
   }
 
@@ -98,15 +125,71 @@ export class ChatHandler extends BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    tools?: ToolDefinition[],
   ): Promise<Response> {
     const response = await this.sendStreamingRequest(
       messages,
       model,
       apiKey,
       webSearchConfig,
-      signal
+      signal,
     );
+
+    if (tools && tools.length > 0) {
+      return executeStreamingPipeline(response, {
+        onChunk: async (_writer, _chunk) => {
+          // Buffers content in pipeline accumulator to prevent tool call JSON leakage
+        },
+        onEnd: async (writer, accumulatedContent) => {
+          const toolCalls = ToolCallingEmulator.parseResponse(
+            accumulatedContent,
+            tools,
+          );
+
+          if (toolCalls && toolCalls.length > 0) {
+            for (let i = 0; i < toolCalls.length; i++) {
+              const tc = toolCalls[i];
+              if (!tc) continue;
+              const returnChunk = createOpenAISSEChunk(
+                model,
+                {
+                  tool_calls: [
+                    {
+                      index: i,
+                      id: tc.id,
+                      type: "function",
+                      function: {
+                        name: tc.function.name,
+                        arguments: tc.function.arguments,
+                      },
+                    },
+                  ],
+                },
+                null,
+              );
+              await writeSSEEvent(writer, returnChunk);
+            }
+            const finalChunk = createOpenAISSEChunk(model, {}, "tool_calls");
+            await writeSSEEvent(writer, finalChunk);
+          } else {
+            const cleanContent =
+              ResponseSanitizer.cleanOutput(accumulatedContent);
+            if (cleanContent) {
+              const returnChunk = createOpenAISSEChunk(
+                model,
+                { content: cleanContent },
+                null,
+              );
+              await writeSSEEvent(writer, returnChunk);
+            }
+            const finalChunk = createOpenAISSEChunk(model, {}, "stop");
+            await writeSSEEvent(writer, finalChunk);
+          }
+          await writeSSEDone(writer);
+        },
+      });
+    }
 
     return executeStreamingPipeline(response, {
       onChunk: async (writer, chunk) => {
@@ -128,13 +211,27 @@ export class ChatHandler extends BaseTextHandler {
   private transformToOpenAIFormat(
     data: OneMinChatResponse,
     model: string,
-    messages: Message[]
+    messages: Message[],
+    tools?: ToolDefinition[],
   ): ChatCompletionResponse {
-    const content = extractOneMinContent(data);
-    
+    const rawContent = extractOneMinContent(data);
+    const toolCalls = tools
+      ? ToolCallingEmulator.parseResponse(rawContent, tools)
+      : null;
+
+    let content: string | null = null;
+    let finishReason = "stop";
+
+    if (toolCalls && toolCalls.length > 0) {
+      finishReason = "tool_calls";
+      content = null;
+    } else {
+      content = ResponseSanitizer.cleanOutput(rawContent);
+    }
+
     // Calculo Real de Tokens
     const promptTokens = estimateInputTokens(messages);
-    const completionTokens = calculateTokens(content, model);
+    const completionTokens = calculateTokens(content || rawContent, model);
     const totalTokens = promptTokens + completionTokens;
 
     return {
@@ -148,8 +245,11 @@ export class ChatHandler extends BaseTextHandler {
           message: {
             role: "assistant",
             content: content,
+            ...(toolCalls && toolCalls.length > 0
+              ? { tool_calls: toolCalls }
+              : {}),
           },
-          finish_reason: "stop",
+          finish_reason: finishReason,
         },
       ],
       usage: {

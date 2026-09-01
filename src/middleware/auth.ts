@@ -20,7 +20,7 @@ export const authMiddleware = createMiddleware<HonoEnv>(async (c, next) => {
       // Cliente usou a senha do proxy; usa a chave real configurada em ONE_MIN_API_KEY
       if (!c.env.ONE_MIN_API_KEY) {
         throw new AuthenticationError(
-          "AUTH_TOKEN validado, mas ONE_MIN_API_KEY nao esta configurada no Worker."
+          "AUTH_TOKEN validado, mas ONE_MIN_API_KEY nao esta configurada no Worker.",
         );
       }
       finalApiKey = c.env.ONE_MIN_API_KEY;

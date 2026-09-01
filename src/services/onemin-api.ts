@@ -15,16 +15,79 @@ import { ApiError } from "../utils/errors";
 import { processImageUrl, uploadImageToAsset } from "../utils/image";
 import { extractTextFromMessageContent } from "../utils/message-processing";
 import type { WebSearchConfig } from "../utils/model-parser";
+import { ResponseSanitizer } from "../utils/sanitizer";
 import { isVisionModel } from "./model-registry";
 
-// Map upstream HTTP status to a safe client-facing error message
-function sanitizeUpstreamError(status: number): string {
-  if (status === 401) return "Authentication failed with upstream provider";
-  if (status === 403) return "Access denied by upstream provider";
-  if (status === 404) return "Resource not found on upstream provider";
-  if (status === 429) return "Rate limited by upstream provider";
-  if (status >= 500) return "Upstream provider returned an internal error";
-  return "Upstream request failed";
+/**
+ * Formata uma mensagem individual para representação textual no histórico
+ * sem contaminar o modelo com tags literais "Tool:" ou JSON cru de memória
+ */
+function formatMessageItem(msg: Message): string {
+  // 1. Mensagens com role "tool" ou "function" (Retorno de busca/memória)
+  if (msg.role === "tool" || msg.role === "function") {
+    const cleanContent = ResponseSanitizer.unpackMemoryContent(msg.content);
+    return `[Contexto do Sistema - Informação Recuperada]:\n${cleanContent}`;
+  }
+
+  // 2. Mensagens do assistente que continham chamadas de ferramentas
+  if (
+    msg.role === "assistant" &&
+    Array.isArray(msg.tool_calls) &&
+    msg.tool_calls.length > 0
+  ) {
+    const callsStr = msg.tool_calls
+      .map((c) => {
+        const fnName = c.function?.name || "unnamed_tool";
+        const fnArgs = c.function?.arguments ?? "{}";
+        const argsStr =
+          typeof fnArgs === "string" ? fnArgs : JSON.stringify(fnArgs);
+        return `${fnName}(${argsStr})`;
+      })
+      .join(", ");
+    return `[Assistente consultou: ${callsStr}]`;
+  }
+
+  // 3. Blocos da Anthropic Messages API (tool_use e tool_result)
+  if (Array.isArray(msg.content)) {
+    const contentArray = msg.content as unknown[];
+    const hasAnthropicBlocks = contentArray.some(
+      (b) =>
+        b &&
+        typeof b === "object" &&
+        "type" in b &&
+        ((b as { type: string }).type === "tool_use" ||
+          (b as { type: string }).type === "tool_result"),
+    );
+    if (hasAnthropicBlocks) {
+      return (
+        contentArray as Array<{
+          type?: string;
+          text?: string;
+          name?: string;
+          input?: unknown;
+          content?: unknown;
+        }>
+      )
+        .map((block) => {
+          if (block.type === "text") return block.text || "";
+          if (block.type === "tool_use") {
+            return `[Assistente consultou: ${block.name || "ferramenta"}(${JSON.stringify(block.input || {})})]`;
+          }
+          if (block.type === "tool_result") {
+            const cleanContent = ResponseSanitizer.unpackMemoryContent(
+              block.content,
+            );
+            return `[Contexto do Sistema - Informação Recuperada]:\n${cleanContent}`;
+          }
+          return "";
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+  }
+
+  // Mensagens normais
+  return msg.content ? extractTextFromMessageContent(msg.content) : "";
 }
 
 // Converts message array to a single prompt string for the 1min.ai API
@@ -36,7 +99,7 @@ function formatConversationHistory(
 
   for (const message of messages) {
     const role = message.role;
-    const content = extractTextFromMessageContent(message.content);
+    const content = formatMessageItem(message);
 
     if (role === "system") {
       formattedHistory += `System: ${content}\n\n`;
@@ -45,7 +108,9 @@ function formatConversationHistory(
     } else if (role === "assistant") {
       formattedHistory += `Assistant: ${content}\n\n`;
     } else if (role === "tool" || role === "function") {
-      formattedHistory += `Tool: ${content}\n\n`;
+      formattedHistory += `${content}\n\n`;
+    } else {
+      formattedHistory += `${role}: ${content}\n\n`;
     }
   }
 
@@ -53,7 +118,7 @@ function formatConversationHistory(
     formattedHistory += `Human: ${newInput}\n\n`;
   }
 
-  return formattedHistory;
+  return formattedHistory.trim();
 }
 
 export class OneMinApiService {

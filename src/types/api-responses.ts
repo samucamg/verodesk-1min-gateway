@@ -2,6 +2,8 @@
  * API response types for OpenAI-compatible responses
  */
 
+import type { ToolCallItem } from "../utils/tool-emulator";
+
 export interface ChatCompletionResponse {
   id: string;
   object: "chat.completion";
@@ -12,6 +14,7 @@ export interface ChatCompletionResponse {
     message: {
       role: string;
       content: string | null;
+      tool_calls?: ToolCallItem[];
     };
     finish_reason: string | null;
   }>;
@@ -31,7 +34,16 @@ export interface ChatCompletionStreamChunk {
     index: number;
     delta: {
       role?: string;
-      content?: string;
+      content?: string | null;
+      tool_calls?: Array<{
+        index?: number;
+        id?: string;
+        type?: "function";
+        function?: {
+          name?: string;
+          arguments?: string;
+        };
+      }>;
     };
     finish_reason: string | null;
   }>;

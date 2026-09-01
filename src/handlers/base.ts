@@ -24,7 +24,7 @@ export abstract class BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<OneMinChatResponse> {
     const requestBody = await this.apiService.buildChatRequestBody(
       messages,
@@ -37,7 +37,7 @@ export abstract class BaseTextHandler {
       requestBody,
       false,
       apiKey,
-      signal
+      signal,
     );
     return (await response.json()) as OneMinChatResponse;
   }
@@ -51,7 +51,7 @@ export abstract class BaseTextHandler {
     model: string,
     apiKey: string,
     webSearchConfig?: WebSearchConfig,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<Response> {
     const requestBody = await this.apiService.buildChatRequestBody(
       messages,

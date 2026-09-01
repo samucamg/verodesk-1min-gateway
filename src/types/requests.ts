@@ -2,6 +2,8 @@
  * Request type definitions for API endpoints
  */
 
+import type { ToolDefinition } from "../utils/tool-emulator";
+
 export interface ChatCompletionRequest {
   model?: string;
   messages: Array<{
@@ -14,13 +16,19 @@ export interface ChatCompletionRequest {
           image_url?: {
             url: string;
           };
-        }>;
+        }>
+      | null;
+    name?: string;
+    tool_calls?: unknown[];
+    tool_call_id?: string;
   }>;
   // Accepted for OpenAI SDK compatibility but NOT forwarded upstream:
   // the 1min.ai Chat with AI API has no sampling parameters.
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;
+  tools?: ToolDefinition[];
+  tool_choice?: unknown;
 }
 
 export interface ImageGenerationRequest {

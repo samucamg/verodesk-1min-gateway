@@ -32,7 +32,7 @@ export function extractTextFromMessageContent(content: MessageContent): string {
  * Accepts broad content types to work with OpenAI, Anthropic, and internal formats.
  */
 export function extractAllMessageText(
-  messages: Array<{ content?: string | unknown[] }>,
+  messages: Array<{ content?: string | unknown[] | null }>,
 ): string {
   const parts: string[] = [];
   for (const msg of messages) {

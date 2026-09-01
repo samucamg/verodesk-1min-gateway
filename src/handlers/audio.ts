@@ -49,10 +49,14 @@ export class AudioHandler extends BaseTextHandler {
           (requestBody.response_format as string) || "MP3"
         ).toUpperCase(),
       };
-    } else if (requestedModel === "elevenlabs-tts" || requestedModel.startsWith("eleven_")) {
-      const actualModelId = requestedModel === "elevenlabs-tts" 
-        ? (requestBody.model_id || "eleven_multilingual_v2") 
-        : requestedModel;
+    } else if (
+      requestedModel === "elevenlabs-tts" ||
+      requestedModel.startsWith("eleven_")
+    ) {
+      const actualModelId =
+        requestedModel === "elevenlabs-tts"
+          ? requestBody.model_id || "eleven_multilingual_v2"
+          : requestedModel;
 
       modelForApi = "elevenlabs-tts";
 

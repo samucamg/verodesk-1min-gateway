@@ -92,7 +92,7 @@ export interface AnthropicMessageResponse {
   id: string;
   type: "message";
   role: "assistant";
-  content: AnthropicTextContent[];
+  content: AnthropicContentBlock[];
   model: string;
   stop_reason: "end_turn" | "max_tokens" | "stop_sequence" | "tool_use" | null;
   stop_sequence: string | null;

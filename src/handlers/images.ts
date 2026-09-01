@@ -45,11 +45,13 @@ export class ImageHandler extends BaseTextHandler {
     if (!requestBodyForAPI.promptObject) {
       requestBodyForAPI.promptObject = {};
     }
-    requestBodyForAPI.promptObject.output_format = requestBody.output_format || "webp";
-    
+    requestBodyForAPI.promptObject.output_format =
+      requestBody.output_format || "webp";
+
     // Mapeando a compressão/qualidade (aceita os dois nomes)
     if (requestBody.output_compression || requestBody.output_quality) {
-      requestBodyForAPI.promptObject.output_quality = requestBody.output_compression || requestBody.output_quality;
+      requestBodyForAPI.promptObject.output_quality =
+        requestBody.output_compression || requestBody.output_quality;
     }
 
     const data = await this.apiService.sendImageRequest(
@@ -68,7 +70,10 @@ export class ImageHandler extends BaseTextHandler {
     const temporaryUrl = data?.aiRecord?.temporaryUrl;
 
     if (!temporaryUrl) {
-      throw new ApiError("Nenhuma URL temporaria assinada foi retornada pela API", 500);
+      throw new ApiError(
+        "Nenhuma URL temporaria assinada foi retornada pela API",
+        500,
+      );
     }
 
     return {

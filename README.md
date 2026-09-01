@@ -103,6 +103,8 @@ curl https://YOUR_WORKER_URL/v1/models \
 - **🌊 Streaming translation:** UTF-8-safe SSE handling for OpenAI-style and Anthropic-style consumers.
 - **🖼️ Image controls:** supported image flows accept `output_format` and `output_quality` overrides.
 - **🛡️ Edge protection:** cached CORS preflight handling and security headers for browser-facing deployments.
+- **🛠️ ReAct tool-calling emulation:** OpenAI and Anthropic tool definitions are converted into a controlled ReAct prompt when the selected upstream model does not provide native tool calls. The gateway parses balanced JSON, strips `<think>` output, returns OpenAI `tool_calls` or Anthropic `tool_use`, and accepts the corresponding tool-result turn.
+- **🌐 Native web search and optional web hub:** append `:online` to a model ID to request 1min.ai native web search where supported. Optional protected routes expose `POST /v1/search` through SearXNG and `POST /v1/web/fetch` through Jina Reader.
 
 ## 🗺️ Endpoint matrix
 
@@ -117,6 +119,8 @@ curl https://YOUR_WORKER_URL/v1/models \
 | `POST` | `/v1/audio/speech` | OpenAI | Multi-engine text-to-speech |
 | `POST` | `/v1/audio/transcriptions` | OpenAI | Multipart speech-to-text |
 | `POST` | `/v1/audio/translations` | OpenAI | Audio translation to English |
+| `POST` | `/v1/search` | Gateway | Optional SearXNG web search hub |
+| `POST` | `/v1/web/fetch` | Gateway | Optional Jina Reader URL-content extraction |
 
 ## 🔐 Authentication and secrets
 
@@ -126,6 +130,17 @@ curl https://YOUR_WORKER_URL/v1/models \
 | Master proxy | Gateway `AUTH_TOKEN` in `Authorization: Bearer ...` | Validates the token and injects `ONE_MIN_API_KEY` upstream | n8n, frontends, internal APIs, and production |
 
 In master proxy mode, keep `ONE_MIN_API_KEY` only in Cloudflare secrets. Never add it to commits, README examples, screenshots, frontend JavaScript, or URLs.
+
+### Optional web-hub secrets
+
+The built-in `:online` suffix uses the upstream 1min.ai web-search capability when that capability is available for the selected model. The optional direct endpoints are independent of that suffix: `/v1/search` needs a reachable SearXNG instance, while `/v1/web/fetch` uses Jina Reader. Configure the SearXNG values only when you intend to expose `/v1/search`:
+
+```bash
+npx wrangler secret put SEARXNG_URL
+npx wrangler secret put SEARXNG_SECRET
+```
+
+Do not expose an unauthenticated SearXNG deployment through this Worker. Both optional routes should remain behind the same gateway authentication middleware as the model routes.
 
 ### 🔄 Credential rotation
 
@@ -169,6 +184,56 @@ curl -X POST https://YOUR_WORKER_URL/v1/chat/completions \
   }'
 ```
 
+### 🛠️ Function calling and tool results
+
+Pass standard OpenAI `tools` definitions to Chat Completions. The gateway preserves the client contract: a tool request returns `finish_reason: "tool_calls"`; execute the requested function in your application, then send a new conversation turn containing a `role: "tool"` message with the matching `tool_call_id`. With `stream: true`, tool-call deltas are emitted as `choices[0].delta.tool_calls`.
+
+```typescript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://YOUR_WORKER_URL/v1",
+  apiKey: "YOUR_AUTH_TOKEN",
+});
+
+const first = await client.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "What is the weather in Mantena?" }],
+  tools: [{
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Returns current weather for a location.",
+      parameters: {
+        type: "object",
+        properties: { location: { type: "string" } },
+        required: ["location"],
+        additionalProperties: false
+      }
+    }
+  }],
+  tool_choice: "auto"
+});
+
+const assistant = first.choices[0].message;
+if (first.choices[0].finish_reason === "tool_calls") {
+  const call = assistant.tool_calls?.[0];
+  if (!call) throw new Error("Missing tool call");
+  const result = JSON.stringify({ location: "Mantena", condition: "clear", celsius: 24 });
+  const final = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "user", content: "What is the weather in Mantena?" },
+      assistant,
+      { role: "tool", tool_call_id: call.id, content: result }
+    ]
+  });
+  console.log(final.choices[0].message.content);
+}
+```
+
+The gateway does not execute functions, shell commands, or client-side tools itself. It only normalizes the model request and response; the calling application must authorize and execute each tool.
+
 ### 👁️ Vision input
 
 For a vision-capable model, send an array containing text and `image_url` content:
@@ -211,6 +276,24 @@ curl -X POST https://YOUR_WORKER_URL/v1/responses \
     "reasoning_effort": "high"
   }'
 ```
+
+## 🌐 Direct web endpoints
+
+These optional endpoints are useful when an application needs explicit search or page extraction rather than model-mediated search. They use the gateway authorization header and must not be treated as an unrestricted public proxy.
+
+```bash
+curl -X POST https://YOUR_WORKER_URL/v1/search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+  -d '{"query":"latest artificial intelligence news","limit":5}'
+
+curl -X POST https://YOUR_WORKER_URL/v1/web/fetch \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+  -d '{"url":"https://example.com/article"}'
+```
+
+`/v1/search` requires `SEARXNG_URL`; configure `SEARXNG_SECRET` if the selected SearXNG instance requires an authentication secret. `/v1/web/fetch` returns cleaned page content via Jina Reader and should be protected by normal gateway access controls.
 
 ## 🖼️ Image generation
 
@@ -280,6 +363,10 @@ curl -X POST https://YOUR_WORKER_URL/v1/messages \
 ```
 
 Add `"stream": true` for Anthropic SSE. Model availability is dynamic, so query `/v1/models` first.
+
+### Tool use
+
+`POST /v1/messages` also accepts Anthropic `tools` and returns `tool_use` content blocks, including `content_block_start` and incremental input deltas during streaming. Return the external result in a subsequent user message containing a `tool_result` block with the matching `tool_use_id`. As with OpenAI compatibility, the client executes and authorizes the actual tool; the Worker never executes it.
 
 ## 🛠️ Local development and manual deploy
 
@@ -455,6 +542,8 @@ curl https://SUA_URL_DO_WORKER/v1/models \
 - **🌊 Tradução de streaming:** tratamento SSE seguro em UTF-8 para consumidores OpenAI e Anthropic.
 - **🖼️ Controles de imagem:** fluxos compatíveis aceitam overrides de `output_format` e `output_quality`.
 - **🛡️ Proteção de borda:** preflight CORS em cache e headers de segurança para implantações acessadas pelo navegador.
+- **🛠️ Emulação ReAct de tool calling:** definições de ferramentas OpenAI e Anthropic são convertidas em um prompt ReAct controlado quando o modelo upstream não oferece chamadas nativas. O gateway interpreta JSON balanceado, remove saída `<think>`, devolve `tool_calls` no formato OpenAI ou `tool_use` no formato Anthropic e aceita o turno subsequente de resultado da ferramenta.
+- **🌐 Busca web nativa e hub web opcional:** acrescente `:online` ao ID do modelo para solicitar a busca web nativa da 1min.ai quando houver suporte. Rotas protegidas opcionais expõem `POST /v1/search` via SearXNG e `POST /v1/web/fetch` via Jina Reader.
 
 ## 🗺️ Matriz de endpoints
 
@@ -469,6 +558,8 @@ curl https://SUA_URL_DO_WORKER/v1/models \
 | `POST` | `/v1/audio/speech` | OpenAI | Texto para fala multi-motor |
 | `POST` | `/v1/audio/transcriptions` | OpenAI | Fala para texto via multipart |
 | `POST` | `/v1/audio/translations` | OpenAI | Tradução de áudio para inglês |
+| `POST` | `/v1/search` | Gateway | Hub opcional de busca web via SearXNG |
+| `POST` | `/v1/web/fetch` | Gateway | Extração opcional de conteúdo de URL via Jina Reader |
 
 ## 🔐 Autenticação e segredos
 
@@ -478,6 +569,17 @@ curl https://SUA_URL_DO_WORKER/v1/models \
 | Master proxy | `AUTH_TOKEN` do gateway em `Authorization: Bearer ...` | Valida o token e injeta `ONE_MIN_API_KEY` | n8n, frontends, APIs internas e produção |
 
 No modo master proxy, mantenha `ONE_MIN_API_KEY` exclusivamente em secrets do Cloudflare. Nunca a coloque em commits, exemplos de README, capturas de tela, JavaScript de frontend ou URLs.
+
+### Secrets opcionais do hub web
+
+O sufixo `:online` usa a capacidade de busca web upstream da 1min.ai quando ela está disponível para o modelo escolhido. Os endpoints diretos opcionais são independentes desse sufixo: `/v1/search` requer uma instância SearXNG acessível, enquanto `/v1/web/fetch` usa o Jina Reader. Configure os valores SearXNG apenas se for expor `/v1/search`:
+
+```bash
+npx wrangler secret put SEARXNG_URL
+npx wrangler secret put SEARXNG_SECRET
+```
+
+Não exponha uma instância SearXNG sem autenticação por meio deste Worker. As duas rotas opcionais devem permanecer protegidas pelo mesmo middleware de autenticação das rotas de modelos.
 
 ### 🔄 Rotação de credenciais
 
@@ -521,6 +623,56 @@ curl -X POST https://SUA_URL_DO_WORKER/v1/chat/completions \
   }'
 ```
 
+### 🛠️ Function calling e resultados de ferramentas
+
+Envie definições OpenAI padrão em `tools` para Chat Completions. O gateway preserva o contrato do cliente: uma solicitação de ferramenta retorna `finish_reason: "tool_calls"`; execute a função na sua aplicação e envie um novo turno com mensagem `role: "tool"` e o `tool_call_id` correspondente. Com `stream: true`, os deltas de ferramenta são emitidos em `choices[0].delta.tool_calls`.
+
+```typescript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://SUA_URL_DO_WORKER/v1",
+  apiKey: "SEU_AUTH_TOKEN",
+});
+
+const primeira = await client.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "Como está o tempo em Mantena?" }],
+  tools: [{
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Retorna o clima atual de uma localidade.",
+      parameters: {
+        type: "object",
+        properties: { location: { type: "string" } },
+        required: ["location"],
+        additionalProperties: false
+      }
+    }
+  }],
+  tool_choice: "auto"
+});
+
+const assistant = primeira.choices[0].message;
+if (primeira.choices[0].finish_reason === "tool_calls") {
+  const call = assistant.tool_calls?.[0];
+  if (!call) throw new Error("Tool call ausente");
+  const resultado = JSON.stringify({ location: "Mantena", condition: "clear", celsius: 24 });
+  const final = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "user", content: "Como está o tempo em Mantena?" },
+      assistant,
+      { role: "tool", tool_call_id: call.id, content: resultado }
+    ]
+  });
+  console.log(final.choices[0].message.content);
+}
+```
+
+O gateway não executa funções, comandos de shell ou ferramentas do cliente. Ele apenas normaliza a requisição e a resposta do modelo; a aplicação chamadora precisa autorizar e executar cada ferramenta.
+
 ### 👁️ Entrada de visão
 
 Para modelos compatíveis com visão, envie um array com conteúdo de texto e `image_url`:
@@ -563,6 +715,24 @@ curl -X POST https://SUA_URL_DO_WORKER/v1/responses \
     "reasoning_effort": "high"
   }'
 ```
+
+## 🌐 Endpoints web diretos
+
+Estes endpoints opcionais são úteis quando a aplicação precisa de busca explícita ou extração de página, em vez de busca mediada pelo modelo. Eles usam o header de autorização do gateway e não devem ser tratados como proxy público irrestrito.
+
+```bash
+curl -X POST https://SUA_URL_DO_WORKER/v1/search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{"query":"últimas notícias sobre inteligência artificial","limit":5}'
+
+curl -X POST https://SUA_URL_DO_WORKER/v1/web/fetch \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_AUTH_TOKEN" \
+  -d '{"url":"https://exemplo.com/artigo"}'
+```
+
+`/v1/search` requer `SEARXNG_URL`; configure `SEARXNG_SECRET` se a instância SearXNG escolhida exigir segredo de autenticação. `/v1/web/fetch` retorna conteúdo limpo de páginas via Jina Reader e deve permanecer protegido pelos controles normais de acesso do gateway.
 
 ## 🖼️ Geração de imagens
 
@@ -632,6 +802,10 @@ curl -X POST https://SUA_URL_DO_WORKER/v1/messages \
 ```
 
 Acrescente `"stream": true` para SSE Anthropic. A disponibilidade de modelos é dinâmica, então consulte `/v1/models` primeiro.
+
+### Uso de ferramentas
+
+`POST /v1/messages` também aceita `tools` no formato Anthropic e retorna blocos de conteúdo `tool_use`, incluindo `content_block_start` e deltas incrementais de entrada em streaming. Devolva o resultado externo em uma mensagem de usuário subsequente contendo um bloco `tool_result` com o `tool_use_id` correspondente. Assim como na compatibilidade OpenAI, o cliente executa e autoriza a ferramenta real; o Worker nunca a executa.
 
 ## 🛠️ Desenvolvimento local e deploy manual
 
