@@ -1,7 +1,7 @@
 {
-  "name": "1min-relay-worker",
-  "version": "5.0.2",
-  "description": "Cloudflare Worker implementation of 1min-relay",
+  "name": "verodesk-1min-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway Universal (OpenAI/Anthropic) para ecossistema 1min.ai",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -10,17 +10,10 @@
     "format": "biome check --write src/",
     "lint": "biome lint src/",
     "check": "biome check src/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc --noEmit"
   },
-  "keywords": [
-    "cloudflare",
-    "worker",
-    "1min.ai",
-    "api",
-    "relay"
-  ],
-  "author": "",
-  "license": "ISC",
+  "author": "Samuel Santos (@samucamg)",
+  "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
     "@cloudflare/workers-types": "^4.20250701.0",

@@ -1,0 +1,5 @@
+# Your upstream 1min.ai API Key
+ONE_MIN_API_KEY="your-1min-ai-api-key-here"
+
+# Optional: Master Proxy Auth Token (leave blank to require client's own API key)
+AUTH_TOKEN=""
